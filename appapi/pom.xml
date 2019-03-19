@@ -9,6 +9,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>app-api</artifactId>
+    <packaging>war</packaging>
+
 
     <properties>
         <jersey.version>2.26</jersey.version>
