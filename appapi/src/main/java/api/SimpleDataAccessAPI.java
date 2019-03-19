@@ -35,6 +35,13 @@ public class SimpleDataAccessAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/")
+    public Response hello() {
+        return Response.status(418, "I`m a teapot!").build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("teachers")
     public Response getListOfTeachers() throws SQLException {
         List<Teacher> teachers = db.getTeachers();

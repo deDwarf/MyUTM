@@ -27,6 +27,13 @@ public class AuthAPI {
     private Database db = Context.getInstance().getDB();
     private static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/")
+    public Response stub() {
+        return Response.status(418, "I`m a teapot!").build();
+    }
+
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)

@@ -3,6 +3,7 @@ package core;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.Properties;
 
 public class Context {
@@ -27,7 +28,11 @@ public class Context {
             String dbname = prop.getProperty("db-name");
             String uname = prop.getProperty("db-login");
             String password = prop.getProperty("db-password");
-            db = Database.create(host, Integer.parseInt(port), dbname, uname, password);
+            try {
+                db = Database.create(host, Integer.parseInt(port), dbname, uname, password);
+            } catch (SQLException e) {
+                throw new RuntimeException("Not able to connect to database instance");
+            }
 
         } catch (FileNotFoundException e) {
             throw new RuntimeException("Failed to find DB properties file: " + propertiesFile);

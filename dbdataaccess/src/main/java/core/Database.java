@@ -24,13 +24,14 @@ public class Database {
     private Database() {}
 
     public static Database create(String hostname, int port, String database,
-                                  String login, String password) {
+                                  String login, String password) throws SQLException {
         MysqlDataSource ds = new MysqlDataSource();
         ds.setServerName(hostname);
         ds.setPort(port);
         ds.setDatabaseName(database);
         ds.setUser(login);
         ds.setPassword(password);
+        ds.setServerTimezone("UTC");
 
         Database db = new Database();
         db.src = ds;
