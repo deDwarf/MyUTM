@@ -61,7 +61,7 @@ IF /I "%IN_PLACE_DEPLOYMENT%" NEQ "1" (
     SET IGNORE_MANIFEST_PARAM=-x
   )
 
-  call :ExecuteCmd "%KUDU_SYNC_CMD%" -v 50 !IGNORE_MANIFEST_PARAM! -f "%DEPLOYMENT_SOURCE%" -t "%DEPLOYMENT_TARGET%" -n "%NEXT_MANIFEST_PATH%" -p "%PREVIOUS_MANIFEST_PATH%" -i ".git;.hg;.deployment;deploy.cmd"
+  call :ExecuteCmd
   IF !ERRORLEVEL! NEQ 0 goto error
 )
 
@@ -71,15 +71,17 @@ goto end
 :: Execute command routine that will echo out when error
 :ExecuteCmd
 setlocal
-set _CMD_=%*
-call %_CMD_%'
+:: set _CMD_=%*
+:: call %_CMD_%'
 
-echo Azure: Removing current war file
-del %DEPLOYMENT_TARGET%\webapps\api.war /S /Q
-echo Azure: Removing current webapp folder
+echo 
+
+echo Removing current war file: %DEPLOYMENT_TARGET%\webapps\api.war
+del %DEPLOYMENT_TARGET%\webapps\api.war /S /Q 
+echo Removing current webapp folder: %DEPLOYMENT_TARGET%\webapps\api
 rmdir %DEPLOYMENT_TARGET%\webapps\api /S /Q
-echo Azure: Copying war to the webapps folder
-xcopy %DEPLOYMENT_TARGET%\appapi\target\api\api.war %DEPLOYMENT_TARGET%\webapps /Y /s 
+echo Copying war to the webapps folder %DEPLOYMENT_SOURCE%\appapi\target\api.war
+xcopy %DEPLOYMENT_SOURCE%\appapi\target\api.war %DEPLOYMENT_TARGET%\webapps /Y /s 
 
 if "%ERRORLEVEL%" NEQ "0" echo Failed exitCode=%ERRORLEVEL%, command=%_CMD_%
 exit /b %ERRORLEVEL%
