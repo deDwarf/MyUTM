@@ -1,0 +1,8 @@
+language: java
+script:
+ - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+ - mvn compile war:war -f appapi/pom.xml
+
+deploy:
+  provider: azure_web_apps
+  on: master
