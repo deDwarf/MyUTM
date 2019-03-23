@@ -31,6 +31,7 @@
     <orderEntry type="library" name="Maven: commons-dbutils:commons-dbutils:1.7" level="project" />
     <orderEntry type="library" name="Maven: mysql:mysql-connector-java:8.0.13" level="project" />
     <orderEntry type="library" name="Maven: com.google.protobuf:protobuf-java:3.6.1" level="project" />
+    <orderEntry type="library" name="Maven: commons-io:commons-io:2.6" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.jersey.containers:jersey-container-grizzly2-http:2.26" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.hk2.external:javax.inject:2.5.0-b42" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.grizzly:grizzly-http-server:2.4.0" level="project" />

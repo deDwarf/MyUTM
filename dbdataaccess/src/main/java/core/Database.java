@@ -5,23 +5,37 @@ import com.mysql.cj.jdbc.MysqlDataSource;
 import org.apache.commons.dbutils.*;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
-import pojos.Classroom;
-import pojos.Group;
-import pojos.Subject;
-import pojos.Teacher;
+import org.apache.commons.io.FileUtils;
+import pojos.*;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 
 import javax.sql.DataSource;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.sql.Date;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 
 public class Database {
-    private final RowProcessor rowProcessor = new BasicRowProcessor(new GenerousBeanProcessor());
+    private static final RowProcessor rowProcessor = new BasicRowProcessor(new GenerousBeanProcessor());
+    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+    private static final ClassLoader cls = ClassLoader.getSystemClassLoader();
     private DataSource src;
     private QueryRunner runner;
-    private Database() {}
+
+
+    private final String getTeacherScheduleForDayTemplateSQL;
+    private final String getGroupScheduleForDayTemplateSQL;
+
+    private Database() {
+        this.getGroupScheduleForDayTemplateSQL = readSQLFromResources(
+                "select_schedule_by_date_and_group.sql");
+        this.getTeacherScheduleForDayTemplateSQL = readSQLFromResources(
+                "select_schedule_by_date_and_teacher.sql");
+    }
 
     public static Database create(String hostname, int port, String database,
                                   String login, String password) throws SQLException {
@@ -36,8 +50,10 @@ public class Database {
         Database db = new Database();
         db.src = ds;
         db.runner = new QueryRunner(db.src);
+
         return db;
     }
+
 
     public List<Teacher> getTeachers() throws SQLException {
         final ResultSetHandler<List<Teacher>> h = new BeanListHandler<>(Teacher.class, rowProcessor);
@@ -64,16 +80,32 @@ public class Database {
         return runner.query("select group_name from fcimapp.Groups", h);
     }
 
-    public void getTeacherScheduleForDay() {
-
+    public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, int teacherId) throws SQLException {
+        return getScheduleEntries(day, teacherId, getTeacherScheduleForDayTemplateSQL);
     }
 
-    public void getGroupScheduleForDay() {
-
+    public List<ScheduleEntry> getGroupScheduleForDay(java.util.Date day, int groupId) throws SQLException {
+        return getScheduleEntries(day, groupId, getGroupScheduleForDayTemplateSQL);
     }
 
-    private String readSQLFromResource(String resourceId) {
-        return null;
+    private List<ScheduleEntry> getScheduleEntries(java.util.Date day, int id, String getScheduleForDayTemplateSQL)
+            throws SQLException {
+        final ResultSetHandler<List<ScheduleEntry>> h = new BeanListHandler<>(ScheduleEntry.class, rowProcessor);
+        String date = formatter.format(day);
+        return runner.query(getScheduleForDayTemplateSQL, h, id, date, id, date);
+    }
+
+    private static String readSQLFromResources(String fileName) {
+        URL resolvedFileName = Database.class.getClassLoader().getResource(fileName);
+        if (resolvedFileName == null) {
+            throw new RuntimeException("Cannot find given file: " + fileName);
+        }
+        File script = new File(resolvedFileName.getFile());
+        try {
+            return FileUtils.readFileToString(script, "UTF-8");
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read from given file");
+        }
     }
 
     // --- functions
