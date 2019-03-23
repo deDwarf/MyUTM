@@ -104,7 +104,7 @@ public class Database {
         try {
             return FileUtils.readFileToString(script, "UTF-8");
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read from given file");
+            throw new RuntimeException("Failed to read from given file: " + fileName, e);
         }
     }
 
