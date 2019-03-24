@@ -7,13 +7,16 @@ public class ScheduleEntry {
     private String classType;
     private int cancelledFlg;
     private Date date;
-    private String classTimeInterval;
+    private String classStartTime;
+    private String classEndTime;
     private String classroomName;
     private String groupNumber;
     private Integer subgroup;
+    private String teacherFirstName;
+    private String teacherMiddleName;
+    private String teacherSecondName;
     private String teacherFullName;
-    private String subjectType;
-    // private String subjectTypeAbbreviated;
+    private String subjectTypeAbbreviated;
     private String subjectName;
     private String subjectNameAbbreviated;
     private int teacherId;
@@ -52,12 +55,20 @@ public class ScheduleEntry {
         this.date = date;
     }
 
-    public String getClassTimeInterval() {
-        return classTimeInterval;
+    public String getClassStartTime() {
+        return classStartTime;
     }
 
-    public void setClassTimeInterval(String classTimeInterval) {
-        this.classTimeInterval = classTimeInterval;
+    public void setClassStartTime(String classStartTime) {
+        this.classStartTime = classStartTime;
+    }
+
+    public String getClassEndTime() {
+        return classEndTime;
+    }
+
+    public void setClassEndTime(String classEndTime) {
+        this.classEndTime = classEndTime;
     }
 
     public String getClassroomName() {
@@ -84,6 +95,30 @@ public class ScheduleEntry {
         this.subgroup = subgroup;
     }
 
+    public String getTeacherFirstName() {
+        return teacherFirstName;
+    }
+
+    public void setTeacherFirstName(String teacherFirstName) {
+        this.teacherFirstName = teacherFirstName;
+    }
+
+    public String getTeacherMiddleName() {
+        return teacherMiddleName;
+    }
+
+    public void setTeacherMiddleName(String teacherMiddleName) {
+        this.teacherMiddleName = teacherMiddleName;
+    }
+
+    public String getTeacherSecondName() {
+        return teacherSecondName;
+    }
+
+    public void setTeacherSecondName(String teacherSecondName) {
+        this.teacherSecondName = teacherSecondName;
+    }
+
     public String getTeacherFullName() {
         return teacherFullName;
     }
@@ -92,21 +127,13 @@ public class ScheduleEntry {
         this.teacherFullName = teacherFullName;
     }
 
-    public String getSubjectType() {
-        return subjectType;
+    public String getSubjectTypeAbbreviated() {
+        return subjectTypeAbbreviated;
     }
 
-    public void setSubjectType(String subjectType) {
-        this.subjectType = subjectType;
+    public void setSubjectTypeAbbreviated(String subjectTypeAbbreviated) {
+        this.subjectTypeAbbreviated = subjectTypeAbbreviated;
     }
-
-//    public String getSubjectTypeAbbreviated() {
-//        return subjectTypeAbbreviated;
-//    }
-//
-//    public void setSubjectTypeAbbreviated(String subjectTypeAbbreviated) {
-//        this.subjectTypeAbbreviated = subjectTypeAbbreviated;
-//    }
 
     public String getSubjectName() {
         return subjectName;
@@ -128,8 +155,8 @@ public class ScheduleEntry {
         return teacherId;
     }
 
-    public void setTeacherId(int mainTeacherId) {
-        this.teacherId = mainTeacherId;
+    public void setTeacherId(int teacherId) {
+        this.teacherId = teacherId;
     }
 
     public int getSubjectId() {
@@ -155,13 +182,16 @@ public class ScheduleEntry {
                 ", classType='" + classType + '\'' +
                 ", cancelledFlg=" + cancelledFlg +
                 ", date=" + date +
-                ", classTimeInterval='" + classTimeInterval + '\'' +
+                ", classStartTime='" + classStartTime + '\'' +
+                ", classEndTime='" + classEndTime + '\'' +
                 ", classroomName='" + classroomName + '\'' +
                 ", groupNumber='" + groupNumber + '\'' +
                 ", subgroup=" + subgroup +
+                ", teacherFirstName='" + teacherFirstName + '\'' +
+                ", teacherMiddleName='" + teacherMiddleName + '\'' +
+                ", teacherSecondName='" + teacherSecondName + '\'' +
                 ", teacherFullName='" + teacherFullName + '\'' +
-                ", subjectType='" + subjectType + '\'' +
-                //", subjectTypeAbbreviated='" + subjectTypeAbbreviated + '\'' +
+                ", subjectTypeAbbreviated='" + subjectTypeAbbreviated + '\'' +
                 ", subjectName='" + subjectName + '\'' +
                 ", subjectNameAbbreviated='" + subjectNameAbbreviated + '\'' +
                 ", teacherId=" + teacherId +

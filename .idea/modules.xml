@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/MyUTM.iml" filepath="$PROJECT_DIR$/MyUTM.iml" />
       <module fileurl="file://$PROJECT_DIR$/appapi/appapi.iml" filepath="$PROJECT_DIR$/appapi/appapi.iml" />
       <module fileurl="file://$PROJECT_DIR$/dbdataaccess/dbdataaccess.iml" filepath="$PROJECT_DIR$/dbdataaccess/dbdataaccess.iml" />
+      <module fileurl="file://$PROJECT_DIR$/dbdataaccesspojos/dbdataaccesspojos.iml" filepath="$PROJECT_DIR$/dbdataaccesspojos/dbdataaccesspojos.iml" />
     </modules>
   </component>
 </project>

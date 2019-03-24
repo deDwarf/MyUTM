@@ -5,14 +5,15 @@ import com.mysql.cj.jdbc.MysqlDataSource;
 import org.apache.commons.dbutils.*;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pojos.*;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 
 import javax.sql.DataSource;
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.nio.charset.Charset;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -22,10 +23,8 @@ import java.util.List;
 public class Database {
     private static final RowProcessor rowProcessor = new BasicRowProcessor(new GenerousBeanProcessor());
     private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-    private static final ClassLoader cls = ClassLoader.getSystemClassLoader();
     private DataSource src;
     private QueryRunner runner;
-
 
     private final String getTeacherScheduleForDayTemplateSQL;
     private final String getGroupScheduleForDayTemplateSQL;
@@ -45,7 +44,7 @@ public class Database {
         ds.setDatabaseName(database);
         ds.setUser(login);
         ds.setPassword(password);
-        ds.setServerTimezone("UTC");
+        ds.setServerTimezone("Europe/Chisinau");
 
         Database db = new Database();
         db.src = ds;
@@ -96,13 +95,8 @@ public class Database {
     }
 
     private static String readSQLFromResources(String fileName) {
-        URL resolvedFileName = Database.class.getClassLoader().getResource(fileName);
-        if (resolvedFileName == null) {
-            throw new RuntimeException("Cannot find given file: " + fileName);
-        }
-        File script = new File(resolvedFileName.getFile());
         try {
-            return FileUtils.readFileToString(script, "UTF-8");
+            return IOUtils.resourceToString(fileName, Charset.forName("UTF-8"), Database.class.getClassLoader());
         } catch (IOException e) {
             throw new RuntimeException("Failed to read from given file: " + fileName, e);
         }

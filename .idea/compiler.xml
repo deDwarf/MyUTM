@@ -9,10 +9,17 @@
         <module name="appapi" />
         <module name="dbdataaccess" />
       </profile>
+      <profile name="Annotation profile for MyUTM" enabled="true">
+        <sourceOutputDir name="../db-data-access-pojos/target/generated-sources/annotations" />
+        <sourceTestOutputDir name="../db-data-access-pojos/target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="dbdataaccesspojos" />
+      </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="appapi" target="1.8" />
       <module name="dbdataaccess" target="1.8" />
+      <module name="dbdataaccesspojos" target="1.8" />
       <module name="MyUTM" target="1.5" />
     </bytecodeTargetLevel>
   </component>

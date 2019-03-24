@@ -11,6 +11,8 @@
     <modules>
         <module>dbdataaccess</module>
         <module>appapi</module>
+        <module>dbdataaccess-pojos</module>
+        <module>db-data-access-pojos</module>
     </modules>
 
     <dependencies>
