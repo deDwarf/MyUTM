@@ -44,7 +44,7 @@ public class Database {
         ds.setDatabaseName(database);
         ds.setUser(login);
         ds.setPassword(password);
-        ds.setServerTimezone("Europe/Chisinau");
+        ds.setServerTimezone("UTC");
 
         Database db = new Database();
         db.src = ds;

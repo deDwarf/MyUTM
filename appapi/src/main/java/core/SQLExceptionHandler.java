@@ -14,7 +14,8 @@ public class SQLExceptionHandler implements ExceptionMapper<SQLException> {
     public Response toResponse(SQLException exception) {
         log.error(exception.toString());
         return Response.status(500)
-                .entity("Internal server error. Please try again in a few minutes")
+                .entity("Internal server error. Please try again in a few minutes. Exception message: "
+                        + exception.getMessage())
                 .type("text/plain").build();
     }
 }
