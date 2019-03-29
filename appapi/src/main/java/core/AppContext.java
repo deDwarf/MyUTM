@@ -1,20 +1,27 @@
 package core;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class Context {
-    private static Context inst = new Context();
+public class AppContext {
+    private static AppContext inst = new AppContext();
     private Database db;
+    public final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
+            .setDateFormat("yyyy-MM-dd")
+            .create();
 
-    public static Context getInstance() {
+    public static AppContext getInstance() {
         return inst;
     }
 
-    private Context() {
+    private AppContext() {
     }
 
     public void loadDatabaseController(String propertiesFile) {

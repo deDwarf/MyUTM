@@ -5,10 +5,34 @@ import java.sql.Date;
 public class Account {
     private String accountId;
     private String userLogin;
-    private String roleName;
+    private String userRole;
     private String passwordHash;
     private Date lastLoginTs;
     private Date registerTs;
+
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
+    }
+
+    public void setUserLogin(String userLogin) {
+        this.userLogin = userLogin;
+    }
+
+    public void setUserRole(String userRole) {
+        this.userRole = userRole;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
+    }
+
+    public void setLastLoginTs(Date lastLoginTs) {
+        this.lastLoginTs = lastLoginTs;
+    }
+
+    public void setRegisterTs(Date registerTs) {
+        this.registerTs = registerTs;
+    }
 
     public String getAccountId() {
         return accountId;
@@ -18,8 +42,8 @@ public class Account {
         return userLogin;
     }
 
-    public String getRoleName() {
-        return roleName;
+    public String getUserRole() {
+        return userRole;
     }
 
     public String getPasswordHash() {

@@ -13,7 +13,7 @@
         <!--</init-param>-->
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
-            <param-value>core.TomcatAppConfig</param-value>
+            <param-value>core.JaxRsAppConfig</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>

@@ -4,15 +4,14 @@ import authpojos.Account;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import org.apache.commons.dbutils.*;
 import org.apache.commons.dbutils.handlers.BeanHandler;
+import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.io.IOUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import pojos.*;
-import org.apache.commons.dbutils.handlers.BeanListHandler;
 
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -28,12 +27,18 @@ public class Database {
 
     private final String getTeacherScheduleForDayTemplateSQL;
     private final String getGroupScheduleForDayTemplateSQL;
+    private final String getStudentByEmail;
+    private final String getStudentById;
 
     private Database() {
         this.getGroupScheduleForDayTemplateSQL = readSQLFromResources(
                 "select_schedule_by_date_and_group.sql");
         this.getTeacherScheduleForDayTemplateSQL = readSQLFromResources(
                 "select_schedule_by_date_and_teacher.sql");
+        this.getStudentByEmail = readSQLFromResources(
+                "select_student_by_email.sql");
+        this.getStudentById = readSQLFromResources(
+                "select_student_by_email.sql");
     }
 
     public static Database create(String hostname, int port, String database,
@@ -54,9 +59,37 @@ public class Database {
     }
 
 
+    public void updateStudentParam(Long studentId, String paramName, Object paramValue) throws SQLException {
+        runner.update(String.format("UPDATE fcimapp.Students SET `%s` = ? WHERE student_id = ?"
+                , paramName), paramValue, studentId);
+    }
+
+    public Student getStudent(String username) throws SQLException {
+        final ResultSetHandler<Student> rh = new BeanHandler<>(Student.class, rowProcessor);
+        return runner.query(getStudentByEmail, rh, username);
+    }
+
+    public Student getStudent(Long id) throws SQLException {
+        final ResultSetHandler<Student> rh = new BeanHandler<>(Student.class, rowProcessor);
+        return runner.query(getStudentById, rh, id);
+    }
+
     public List<Teacher> getTeachers() throws SQLException {
         final ResultSetHandler<List<Teacher>> h = new BeanListHandler<>(Teacher.class, rowProcessor);
         return runner.query("select * from fcimapp.Teachers", h);
+    }
+
+    public Teacher getTeacher(int teacherId) throws SQLException {
+        final ResultSetHandler<Teacher> h = new BeanHandler<>(Teacher.class, rowProcessor);
+        return runner.query("select * from fcimapp.Teachers where teacher_id = ?", h, teacherId);
+    }
+
+    public Teacher getTeacher(String email) throws SQLException {
+        if (email == null) {
+            return null;
+        }
+        final ResultSetHandler<Teacher> h = new BeanHandler<>(Teacher.class, rowProcessor);
+        return runner.query("select * from fcimapp.Teachers where primary_email = ?", h, email.toLowerCase());
     }
 
     public List<Subject> getSubjects() throws SQLException {
@@ -76,18 +109,18 @@ public class Database {
 
     public List<String> getGroupNamesOnly() throws SQLException {
         final ResultSetHandler<List<String>> h = new BeanListHandler<>(String.class, rowProcessor);
-        return runner.query("select group_name from fcimapp.Groups", h);
+        return runner.query(getStudentByEmail, h);
     }
 
-    public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, int teacherId) throws SQLException {
+    public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, Long teacherId) throws SQLException {
         return getScheduleEntries(day, teacherId, getTeacherScheduleForDayTemplateSQL);
     }
 
-    public List<ScheduleEntry> getGroupScheduleForDay(java.util.Date day, int groupId) throws SQLException {
+    public List<ScheduleEntry> getGroupScheduleForDay(java.util.Date day, Long groupId) throws SQLException {
         return getScheduleEntries(day, groupId, getGroupScheduleForDayTemplateSQL);
     }
 
-    private List<ScheduleEntry> getScheduleEntries(java.util.Date day, int id, String getScheduleForDayTemplateSQL)
+    private List<ScheduleEntry> getScheduleEntries(java.util.Date day, Long id, String getScheduleForDayTemplateSQL)
             throws SQLException {
         final ResultSetHandler<List<ScheduleEntry>> h = new BeanListHandler<>(ScheduleEntry.class, rowProcessor);
         String date = formatter.format(day);
@@ -128,12 +161,12 @@ public class Database {
 
     public Account getAccountByUsername(String username) throws SQLException {
         final ResultSetHandler<Account> h = new BeanHandler<>(Account.class, rowProcessor);
-        return runner.query("SELECT * FROM FCIMApp.accounts WHERE username = ?", h, username);
+        return runner.query("SELECT * FROM FCIMApp.accounts WHERE user_login = ?", h, username);
     }
 
-    public int createUserAccount(String username, String passwordHash, String userRole) throws SQLException {
-        final ResultSetHandler<Integer> rh = new ScalarHandler<>();
-        Integer id = runner.insert("INSERT INTO FCIMApp.accounts " +
+    public BigInteger createUserAccount(String username, String passwordHash, String userRole) throws SQLException {
+        final ResultSetHandler<BigInteger> rh = new ScalarHandler<>();
+        BigInteger id = runner.insert("INSERT INTO FCIMApp.accounts " +
                         "(user_login, user_role, password_hash, registered_date) " +
                         "VALUES (?, ?, ?, ?)", rh,
                         username, userRole, passwordHash, Calendar.getInstance().getTime());
@@ -141,9 +174,9 @@ public class Database {
         return id;
     }
 
-    public int createStudent(String userEmail, String firstNm, String secondNm, int groupId) throws SQLException {
-        final ResultSetHandler<Integer> rh = new ScalarHandler<>();
-        Integer id = runner.insert("INSERT INTO FCIMApp.Students (group_id, first_nm, second_nm, " +
+    public BigInteger createStudent(String userEmail, String firstNm, String secondNm, Integer groupId) throws SQLException {
+        final ResultSetHandler<BigInteger> rh = new ScalarHandler<>();
+        BigInteger id = runner.insert("INSERT INTO FCIMApp.Students (group_id, first_nm, second_nm, " +
                         "internal_email_address) " +
                         "VALUES (?, ?, ?, ?)", rh,
                 groupId, firstNm, secondNm, userEmail);
@@ -151,11 +184,11 @@ public class Database {
         return id;
     }
 
-    public void linkStudentWithAccount(int studentId, int accountId) throws SQLException {
-        runner.update("UPDATE FCIMApp.Students SET account_id = ? WHERE teacherId = ?", accountId, studentId);
+    public void linkStudentWithAccount(BigInteger studentId, BigInteger accountId) throws SQLException {
+        runner.update("UPDATE FCIMApp.Students SET account_id = ? WHERE student_id = ?", accountId, studentId);
     }
 
-    public void linkTeacherWithAccount(int teacherId, int accountId) throws SQLException {
-        runner.update("UPDATE FCIMApp.Teachers SET account_id = ? WHERE teacherId = ?", accountId, teacherId);
+    public void linkTeacherWithAccount(BigInteger teacherId, BigInteger accountId) throws SQLException {
+        runner.update("UPDATE FCIMApp.Teachers SET account_id = ? WHERE teacher_id = ?", accountId, teacherId);
     }
 }
