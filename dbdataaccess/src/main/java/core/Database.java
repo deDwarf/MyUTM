@@ -5,6 +5,7 @@ import com.mysql.cj.jdbc.MysqlDataSource;
 import org.apache.commons.dbutils.*;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
+import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
 import org.apache.commons.io.IOUtils;
 import pojos.*;
@@ -108,8 +109,8 @@ public class Database {
     }
 
     public List<String> getGroupNamesOnly() throws SQLException {
-        final ResultSetHandler<List<String>> h = new BeanListHandler<>(String.class, rowProcessor);
-        return runner.query(getStudentByEmail, h);
+        final ColumnListHandler<String> h = new ColumnListHandler<>(1);
+        return runner.query("select distinct `group_name` from fcimapp.Groups", h);
     }
 
     public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, Long teacherId) throws SQLException {
