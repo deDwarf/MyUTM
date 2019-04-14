@@ -20,6 +20,7 @@ public class JaxRsAppConfig extends ResourceConfig {
         this.register(BadRequestExceptionHandler.class);
         this.register(AuthenticationFilter.class);
         this.register(RolesAllowedDynamicFeature.class);
+        this.register(CORSResponseFilter.class);
         this.packages("api");
         AppContext.getInstance().loadDatabaseController("db-remote.properties");
     }

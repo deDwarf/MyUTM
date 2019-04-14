@@ -114,6 +114,9 @@ public class AuthAPI {
         BigInteger acctId = db.createUserAccount(username, passwordHash, Roles.STUDENT);
         BigInteger studId = db.createStudent(username, firstNm, secondNm, groupId);
         db.linkStudentWithAccount(studId, acctId);
+
+        String token = issueToken(username, "STUDENT");
+        response.put("access_token", token);
         response.put("success", "true");
 
         return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();

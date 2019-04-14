@@ -108,6 +108,17 @@ public class Database {
         return runner.query("select * from fcimapp.Groups", h);
     }
 
+    public Group getGroupByName(String name) throws SQLException {
+        name = name.toUpperCase().trim();
+        final ResultSetHandler<Group> h = new BeanHandler<>(Group.class, rowProcessor);
+        return runner.query("select * from fcimapp.Groups where group_name = ?", h, name);
+    }
+
+    public Group getGroupById(Long id) throws SQLException {
+        final ResultSetHandler<Group> h = new BeanHandler<>(Group.class, rowProcessor);
+        return runner.query("select * from fcimapp.Groups where group_id = ?", h, id);
+    }
+
     public List<String> getGroupNamesOnly() throws SQLException {
         final ColumnListHandler<String> h = new ColumnListHandler<>(1);
         return runner.query("select distinct `group_name` from fcimapp.Groups", h);

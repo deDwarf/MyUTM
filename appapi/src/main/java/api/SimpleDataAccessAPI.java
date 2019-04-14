@@ -12,6 +12,7 @@ import pojos.*;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.management.Query;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -70,11 +71,32 @@ public class SimpleDataAccessAPI {
     @Path("profile")
     @RolesAllowed({Roles.STUDENT, Roles.TEACHER})
     public Response updateMyProfile(@Context SecurityContext sec,
-                                    @QueryParam("groupId") Long groupId) throws SQLException {
+                                    @QueryParam("groupId") Long groupId,
+                                    @QueryParam("groupNumber") String groupNumber) throws SQLException {
         Student st = db.getStudent(sec.getUserPrincipal().getName());
         if (sec.isUserInRole(Roles.STUDENT)) {
+            if (groupId != null && groupNumber != null) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                        .entity("You must specify either groupNumber of groupId, but not both of them!")
+                        .build();
+            }
             if (groupId != null) {
-                db.updateStudentParam(st.getStudentId(), "group_id", groupId);
+                Group g = db.getGroupById(groupId);
+                if (g == null) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity("Specified group id is not valid: " + groupId)
+                            .build();
+                }
+                db.updateStudentParam(st.getStudentId(), "group_id", g.getGroupId());
+            }
+            if (groupNumber != null) {
+                Group g = db.getGroupByName(groupNumber);
+                if (g == null) {
+                    return Response.status(Response.Status.BAD_REQUEST)
+                            .entity("Specified group number is not valid: " + groupNumber)
+                            .build();
+                }
+                db.updateStudentParam(st.getStudentId(), "group_id", g.getGroupId());
             }
             return Response.ok().build();
         } else if (sec.isUserInRole(Roles.TEACHER)) {

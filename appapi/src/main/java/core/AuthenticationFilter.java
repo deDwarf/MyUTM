@@ -76,7 +76,7 @@ class JWTSecurityContext implements SecurityContext {
         if (role == null) {
             return false;
         }
-        return role.equals(s);
+        return role.trim().toUpperCase().equals(s.trim().toUpperCase());
     }
 
     @Override
