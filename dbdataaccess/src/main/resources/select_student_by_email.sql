@@ -1,4 +1,4 @@
-SELECT s.*, g.group_name as group_number
+SELECT s.*, g.group_name
 FROM fcimapp.students s
 inner join fcimapp.accounts a
   on s.account_id = a.account_id
