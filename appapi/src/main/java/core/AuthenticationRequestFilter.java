@@ -17,9 +17,9 @@ import java.io.IOException;
 import java.security.Principal;
 
 @Priority(Priorities.AUTHENTICATION)
-public class AuthenticationFilter implements ContainerRequestFilter {
+public class AuthenticationRequestFilter implements ContainerRequestFilter {
     private static final String AUTHENTICATION_SCHEME = "Bearer";
-    private Logger log = LoggerFactory.getLogger(AuthenticationFilter.class);
+    private Logger log = LoggerFactory.getLogger(AuthenticationRequestFilter.class);
 
     @Override
     public void filter(ContainerRequestContext containerRequestContext) throws IOException {

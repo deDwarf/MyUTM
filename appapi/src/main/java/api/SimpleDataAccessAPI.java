@@ -12,7 +12,6 @@ import pojos.*;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.management.Query;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -110,7 +109,7 @@ public class SimpleDataAccessAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("schedule/{from-date}")
+    @Path("myschedule/{from-date}")
     @RolesAllowed({Roles.STUDENT, Roles.TEACHER})
     public Response getMySchedule(@Context SecurityContext sec,
                                   @PathParam("from-date") String fromDate) throws SQLException {
@@ -219,8 +218,10 @@ public class SimpleDataAccessAPI {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("groups/{group}/schedule/")
-    public Response getGroupSchedule(@PathParam("group") String group) {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response getGroupSchedule(@PathParam("group") Long groupId) throws SQLException {
+        List<RegularScheduleEntry> schedule = db.getRegularSchedule(groupId);
+
+        return Response.ok(gson.toJson(schedule)).build();
     }
 
     @GET

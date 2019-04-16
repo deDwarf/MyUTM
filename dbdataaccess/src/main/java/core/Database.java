@@ -139,12 +139,59 @@ public class Database {
         return runner.query(getScheduleForDayTemplateSQL, h, id, date, id, date);
     }
 
+    public List<RegularScheduleEntry> getRegularSchedule(Long groupId)
+            throws SQLException {
+        final ResultSetHandler<List<RegularScheduleEntry>> h = new BeanListHandler<>(RegularScheduleEntry.class, rowProcessor);
+        return runner.query("select * from fcimapp.vw_denormalized_regular_schedule" +
+                " where group_id = ?" +
+                " order by group_number, week_day, class_number, week_parity", h, groupId);
+    }
+
     private static String readSQLFromResources(String fileName) {
         try {
             return IOUtils.resourceToString(fileName, Charset.forName("UTF-8"), Database.class.getClassLoader());
         } catch (IOException e) {
             throw new RuntimeException("Failed to read from given file: " + fileName, e);
         }
+    }
+
+    // --- register schedule
+    public RegularScheduleEntry registerRegularLesson(String table, RegularScheduleEntry data) throws SQLException {
+        final ResultSetHandler<BigInteger> h = new ScalarHandler<>();
+        final String template =
+                "INSERT INTO %s (group_id, week_parity, week_day, class_number, classroom_id, " +
+                        "main_teacher_id, subject_id, subject_type, subgroup, semester_id)" +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        BigInteger id = runner.insert(String.format(template, table), h,
+                data.getGroupId(),
+                data.getWeekParity(), data.getWeekDay(),
+                data.getClassNumber(), data.getClassroomId(),
+                data.getTeacherId(), data.getSubjectId(), data.getSubjectTypeId(),
+                data.getSubgroup(), 1 // TODO !!!!!!!!
+                );
+
+        return getRegularScheduleEntry(id);
+    }
+
+    public int removeRegularClasses(List<Integer> ids) throws SQLException {
+        if (ids == null || ids.size() == 0) {
+            return 0;
+        }
+
+        StringBuilder result = new StringBuilder();
+        result.append(ids.get(0));
+        for (int i = 1; i < ids.size(); i++) {
+            result.append(",").append(ids.get(i));
+        }
+        return runner.update(String.format("delete from fcimapp.schedule where entry_id in (%s)", result.toString()));
+    }
+
+    private RegularScheduleEntry getRegularScheduleEntry(BigInteger scheduleEntryId)
+            throws SQLException {
+        final ResultSetHandler<RegularScheduleEntry> h = new BeanHandler<>(RegularScheduleEntry.class, rowProcessor);
+        return runner.query("select * from fcimapp.vw_denormalized_regular_schedule" +
+                " where schedule_entry_id = ?" +
+                " order by group_number, week_day, class_number, week_parity", h, scheduleEntryId);
     }
 
     // --- functions

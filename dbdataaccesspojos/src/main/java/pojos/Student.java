@@ -5,7 +5,7 @@ public class Student {
 
   private long studentId;
   private long groupId;
-  private long groupName;
+  private long groupNumber;
   private String firstNm;
   private String secondNm;
   private String internalEmailAddress;
@@ -75,12 +75,12 @@ public class Student {
   }
 
 
-  public long getGroupName() {
-    return groupName;
+  public long getGroupNumber() {
+    return groupNumber;
   }
 
-  public void setGroupName(long groupName) {
-    this.groupName = groupName;
+  public void setGroupNumber(long groupNumber) {
+    this.groupNumber = groupNumber;
   }
 
   @Override
@@ -88,7 +88,7 @@ public class Student {
     return "Student{" +
             " studentId=" + studentId +
             ", groupId=" + groupId +
-            ", groupName=" + groupName +
+            ", groupNumber=" + groupNumber +
             ", firstNm='" + firstNm + '\'' +
             ", secondNm='" + secondNm + '\'' +
             ", personalEmailAddress='" + personalEmailAddress + '\'' +

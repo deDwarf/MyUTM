@@ -150,7 +150,10 @@ public class AuthAPI {
 
     private boolean validateUserNameAndPassword(Account u, String username, String password)
             throws InvalidHashException, CannotPerformOperationException {
-        if (username == null || password == null || u.getUserLogin() == null) {
+        if (u == null) {
+            return false;
+        }
+        if (!validateNotEmpty(username, password, u.getUserLogin())) {
             return false;
         }
 
@@ -173,4 +176,22 @@ public class AuthAPI {
                 .compact();
     }
 
+    private Response constructBadRegistrationResponse(String reason, int reasonCode) {
+        Map<String, String> response = new HashMap<>();
+        response.put("success", "false");
+        response.put("reason", reason);
+        response.put("reason_code", String.valueOf(reasonCode));
+
+        return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean validateNotEmpty(String... params) {
+        for (String p: params) {
+            if (p == null || p.trim().equals("")) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
