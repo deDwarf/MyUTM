@@ -20,22 +20,21 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 
+// TODO make subject type id non-null
+
 public class Database {
     private static final RowProcessor rowProcessor = new BasicRowProcessor(new GenerousBeanProcessor());
     private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
     private DataSource src;
     private QueryRunner runner;
 
-    private final String getTeacherScheduleForDayTemplateSQL;
-    private final String getGroupScheduleForDayTemplateSQL;
+    private final String getScheduleForDayTemplateSQL;
     private final String getStudentByEmail;
     private final String getStudentById;
 
     private Database() {
-        this.getGroupScheduleForDayTemplateSQL = readSQLFromResources(
-                "select_schedule_by_date_and_group.sql");
-        this.getTeacherScheduleForDayTemplateSQL = readSQLFromResources(
-                "select_schedule_by_date_and_teacher.sql");
+        this.getScheduleForDayTemplateSQL = readSQLFromResources(
+                "select_schedule_for_date.sql");
         this.getStudentByEmail = readSQLFromResources(
                 "select_student_by_email.sql");
         this.getStudentById = readSQLFromResources(
@@ -80,7 +79,7 @@ public class Database {
         return runner.query("select * from fcimapp.Teachers", h);
     }
 
-    public Teacher getTeacher(int teacherId) throws SQLException {
+    public Teacher getTeacher(Long teacherId) throws SQLException {
         final ResultSetHandler<Teacher> h = new BeanHandler<>(Teacher.class, rowProcessor);
         return runner.query("select * from fcimapp.Teachers where teacher_id = ?", h, teacherId);
     }
@@ -125,18 +124,18 @@ public class Database {
     }
 
     public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, Long teacherId) throws SQLException {
-        return getScheduleEntries(day, teacherId, getTeacherScheduleForDayTemplateSQL);
+        return getScheduleEntries(day, (long) -1, teacherId);
     }
 
     public List<ScheduleEntry> getGroupScheduleForDay(java.util.Date day, Long groupId) throws SQLException {
-        return getScheduleEntries(day, groupId, getGroupScheduleForDayTemplateSQL);
+        return getScheduleEntries(day, groupId, (long) -1);
     }
 
-    private List<ScheduleEntry> getScheduleEntries(java.util.Date day, Long id, String getScheduleForDayTemplateSQL)
+    private List<ScheduleEntry> getScheduleEntries(java.util.Date day, Long groupId, Long teacherId)
             throws SQLException {
         final ResultSetHandler<List<ScheduleEntry>> h = new BeanListHandler<>(ScheduleEntry.class, rowProcessor);
         String date = formatter.format(day);
-        return runner.query(getScheduleForDayTemplateSQL, h, id, date, id, date);
+        return runner.query(getScheduleForDayTemplateSQL, h, groupId, teacherId, date, groupId, teacherId, date);
     }
 
     public List<RegularScheduleEntry> getRegularSchedule(Long groupId)

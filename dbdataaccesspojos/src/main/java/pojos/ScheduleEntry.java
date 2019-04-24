@@ -9,6 +9,7 @@ public class ScheduleEntry {
     private Date date;
     private String classStartTime;
     private String classEndTime;
+    private String classNumber;
     private String classroomName;
     private String groupNumber;
     private Integer subgroup;
@@ -173,6 +174,14 @@ public class ScheduleEntry {
 
     public void setGroupId(int groupId) {
         this.groupId = groupId;
+    }
+
+    public String getClassNumber() {
+        return classNumber;
+    }
+
+    public void setClassNumber(String classNumber) {
+        this.classNumber = classNumber;
     }
 
     @Override
