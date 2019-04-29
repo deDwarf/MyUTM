@@ -33,10 +33,9 @@ import java.util.UUID;
  */
 @Path("auth/")
 @PermitAll
-public class AuthAPI {
+public class AuthAPI extends CommonResource {
     private Database db = AppContext.getInstance().getDB();
     public static final Key KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    private static final Response.ResponseBuilder RESPONSE_BAD_REQUEST = Response.status(Response.Status.BAD_REQUEST);
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -63,6 +62,8 @@ public class AuthAPI {
             }
             String token = issueToken(username, u.getUserRole());
             response.put("access_token", token);
+            response.put("role", u.getUserRole().toUpperCase());
+            response.put("username", u.getUserLogin());
             return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
 
         } else if ("refresh_token".equals(grantType)) {
@@ -81,6 +82,8 @@ public class AuthAPI {
                         jwtClaims.get("chain_uuid", String.class)
                 );
                 response.put("access_token", newToken);
+                response.put("role", jwtClaims.get("role", String.class).toUpperCase());
+                response.put("username", jwtClaims.get("user", String.class).toUpperCase());
                 return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
             } catch (Exception e) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Invalid token").build();
@@ -117,6 +120,8 @@ public class AuthAPI {
 
         String token = issueToken(username, "STUDENT");
         response.put("access_token", token);
+        response.put("role", Roles.STUDENT);
+        response.put("username", username);
         response.put("success", "true");
 
         return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
