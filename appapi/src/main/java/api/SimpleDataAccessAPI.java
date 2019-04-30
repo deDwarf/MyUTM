@@ -1,9 +1,5 @@
 package api;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import core.AppContext;
-import core.Database;
 import core.Roles;
 import exceptions.InvalidDateFormatException;
 import org.slf4j.Logger;
@@ -29,13 +25,8 @@ import java.util.List;
  */
 @Path("/")
 @PermitAll
-public class SimpleDataAccessAPI {
+public class SimpleDataAccessAPI extends CommonResource {
     private Logger log = LoggerFactory.getLogger(getClass());
-    private Gson gson = new GsonBuilder()
-            .setPrettyPrinting()
-            .setDateFormat("yyyy-MM-dd")
-            .create();
-    private Database db = AppContext.getInstance().getDB();
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -125,43 +116,6 @@ public class SimpleDataAccessAPI {
         }
     }
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("teachers")
-    public Response getListOfTeachers() throws SQLException {
-        List<Teacher> teachers = db.getTeachers();
-        return Response.ok(gson.toJson(teachers)).build();
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("groups")
-    public Response getListOfGroups(@QueryParam("names_only") Boolean namesOnlyFlag) throws SQLException {
-        if (namesOnlyFlag == null || !namesOnlyFlag) {
-            List<Group> groups = db.getGroups();
-            return Response.ok(gson.toJson(groups)).build();
-        } else {
-            List<String> groupNames = db.getGroupNamesOnly();
-            return Response.ok(gson.toJson(groupNames)).build();
-        }
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("classrooms")
-    public Response getListOfClassrooms() throws SQLException {
-        List<Classroom> classrooms = db.getClassrooms();
-        return Response.ok(gson.toJson(classrooms)).build();
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("subjects")
-    public Response getListOfSubjects() throws SQLException {
-        List<Subject> subjects = db.getSubjects();
-        return Response.ok(gson.toJson(subjects)).build();
-    }
-
     /**
      * Returns schedule for given group and day
      *
@@ -180,6 +134,15 @@ public class SimpleDataAccessAPI {
             @Context SecurityContext sec) throws SQLException {
         Date parsedDate = parseDate(date);
         List<ScheduleEntry> schedule = db.getGroupScheduleForDay(parsedDate, groupId);
+
+        return Response.ok(gson.toJson(schedule)).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("groups/{group}/schedule/")
+    public Response getGroupSchedule(@PathParam("group") Long groupId) throws SQLException {
+        List<RegularScheduleEntry> schedule = db.getRegularSchedule(groupId);
 
         return Response.ok(gson.toJson(schedule)).build();
     }
@@ -217,16 +180,7 @@ public class SimpleDataAccessAPI {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("groups/{group}/schedule/")
-    public Response getGroupSchedule(@PathParam("group") Long groupId) throws SQLException {
-        List<RegularScheduleEntry> schedule = db.getRegularSchedule(groupId);
-
-        return Response.ok(gson.toJson(schedule)).build();
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("teachers/{teacherId}/schedule")
+    @Path("teachers/{teacherId}/schedule/")
     public Response getTeacherSchedule(@PathParam("teacherId") String teacherId) {
         /*
         repetitive: {

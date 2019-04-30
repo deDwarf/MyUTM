@@ -28,6 +28,7 @@ public class Database {
     private DataSource src;
     private QueryRunner runner;
 
+    private final String getFreeClassrooms;
     private final String getScheduleForDayTemplateSQL;
     private final String getStudentByEmail;
     private final String getStudentById;
@@ -39,6 +40,16 @@ public class Database {
                 "select_student_by_email.sql");
         this.getStudentById = readSQLFromResources(
                 "select_student_by_email.sql");
+        this.getFreeClassrooms = readSQLFromResources(
+                "select_free_classrooms_for_time.sql");
+    }
+
+    protected static String readSQLFromResources(String fileName) {
+        try {
+            return IOUtils.resourceToString(fileName, Charset.forName("UTF-8"), Database.class.getClassLoader());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read from given file: " + fileName, e);
+        }
     }
 
     public static Database create(String hostname, int port, String database,
@@ -97,9 +108,30 @@ public class Database {
         return runner.query("select * from fcimapp.Subjects", h);
     }
 
+    public Subject getSubject(Long id) throws SQLException {
+        final ResultSetHandler<Subject> h = new BeanHandler<>(Subject.class, rowProcessor);
+        return runner.query("select * from fcimapp.Subjects where subject_id = ?", h, id);
+    }
+
+    public List<SubjectType> getSubjectTypes() throws SQLException {
+        final ResultSetHandler<List<SubjectType>> h = new BeanListHandler<>(SubjectType.class, rowProcessor);
+        return runner.query("select * from fcimapp.Subject_Types", h);
+    }
+
+    public SubjectType getSubjectType(Long id) throws SQLException {
+        final ResultSetHandler<SubjectType> h = new BeanHandler<>(SubjectType.class, rowProcessor);
+        return runner.query("select * from fcimapp.Subject_Types where subject_type_id = ?", h, id);
+    }
+
+
     public List<Classroom> getClassrooms() throws SQLException {
         final ResultSetHandler<List<Classroom>> h = new BeanListHandler<>(Classroom.class, rowProcessor);
         return runner.query("select * from fcimapp.Classrooms", h);
+    }
+
+    public Classroom getClassroom(Long id) throws SQLException {
+        final ResultSetHandler<Classroom> h = new BeanHandler<>(Classroom.class, rowProcessor);
+        return runner.query("select * from fcimapp.Classrooms where classroom_id = ?", h, id);
     }
 
     public List<Group> getGroups() throws SQLException {
@@ -146,14 +178,6 @@ public class Database {
                 " order by group_number, week_day, class_number, week_parity", h, groupId);
     }
 
-    private static String readSQLFromResources(String fileName) {
-        try {
-            return IOUtils.resourceToString(fileName, Charset.forName("UTF-8"), Database.class.getClassLoader());
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read from given file: " + fileName, e);
-        }
-    }
-
     // --- register schedule
     public RegularScheduleEntry registerRegularLesson(String table, RegularScheduleEntry data) throws SQLException {
         final ResultSetHandler<BigInteger> h = new ScalarHandler<>();
@@ -195,7 +219,10 @@ public class Database {
 
     // --- functions
 
-    public void getFreeClassroomsForDateAndTime() {}
+    public List<Classroom> getFreeClassroomsForDateAndTime(java.util.Date date, Long classNumber) throws SQLException {
+        final BeanListHandler<Classroom> h = new BeanListHandler<>(Classroom.class, rowProcessor);
+        return runner.query(getFreeClassrooms, h, formatter.format(date), classNumber);
+    }
 
     public void getFreeTimeForGroupAndDay(long groupId, Date date) {}
 

@@ -1,14 +1,12 @@
 package api;
 
-import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import core.AppContext;
-import core.Database;
 import core.Roles;
 import pojos.RegularScheduleEntry;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
@@ -19,11 +17,8 @@ import java.util.List;
 /**
  *
  */
-// distinguish by some "action" field? it will not work the way it is specified currently
 @Path("/schedule")
-public class ScheduleAlterationAPI {
-    private Database db = AppContext.getInstance().getDB();
-    private Gson gson = AppContext.getInstance().GSON;
+public class ScheduleResource extends CommonResource {
 
     @POST
     @RolesAllowed({Roles.ADMIN})
@@ -36,19 +31,11 @@ public class ScheduleAlterationAPI {
         return Response.ok(gson.toJson(entry)).build();
     }
 
-    @POST
-    @RolesAllowed({Roles.ADMIN, Roles.TEACHER})
-    @Path("/dated")
-    public Response registerDatedClass() {
-        // groups, teacher, date, time, classroom, subject, subject_type
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
-    }
-
-    @POST
+    @DELETE
     @RolesAllowed({Roles.ADMIN})
     @Consumes(MediaType.TEXT_PLAIN)
-    @Path("regular/remove")
-    public Response removeClass(String data) throws SQLException {
+    @Path("/regular")
+    public Response removeRegularClass(String data) throws SQLException {
         List<Integer> ids = gson.fromJson(data, new TypeToken<List<Integer>>(){}.getType());
         int affected = db.removeRegularClasses(ids);
         return Response.ok(affected).build();
@@ -58,16 +45,24 @@ public class ScheduleAlterationAPI {
     @RolesAllowed({Roles.ADMIN, Roles.TEACHER})
     @Consumes(MediaType.TEXT_PLAIN)
     @Path("regular/cancel")
-    public Response cancelClass(String data) throws SQLException {
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    public Response cancelRegularClass(String data) throws SQLException {
+        return RESPONSE_NOT_IMPLEMENTED;
     }
 
     @POST
     @RolesAllowed({Roles.ADMIN, Roles.TEACHER})
     @Path("regular/postpone")
-    public Response postponeClass() {
+    public Response postponeRegularClass() {
         // List - to make it possible to postpone the same class for multiple groups
         // list of IDs, newDate, newTime, newClassroom
-        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+        return RESPONSE_NOT_IMPLEMENTED;
+    }
+
+    @POST
+    @RolesAllowed({Roles.ADMIN, Roles.TEACHER})
+    @Path("/dated")
+    public Response registerDatedClass() {
+        // groups, teacher, date, time, classroom, subject, subject_type
+        return RESPONSE_NOT_IMPLEMENTED;
     }
 }
