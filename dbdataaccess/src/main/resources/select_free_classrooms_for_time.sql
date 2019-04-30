@@ -1,7 +1,7 @@
 select c.*
 from fcimapp.classrooms c
 left join fcimapp.calendar ca1
-    on ca1.date_key = DATE_ADD(?, interval 1 day)
+    on ca1.date_key = ?
 left join fcimapp.schedule s
    on c.classroom_id = s.classroom_id
      and s.week_day = ca1.week_day_number

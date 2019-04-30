@@ -37,7 +37,7 @@ public class ClassroomsResource extends CommonResource {
     public Response getFreeClassrooms(@QueryParam("date") String date, @QueryParam("classNumber") Long classNumber)
             throws SQLException, ParseException {
         if (date == null || classNumber == null) {
-            return RESPONSE_BAD_REQUEST.entity("'date' and 'classNumber' field  s should not be empty").build();
+            return RESPONSE_BAD_REQUEST.entity("'date' and 'classNumber' fields should not be empty").build();
         }
         List<Classroom> classrooms = db.getFreeClassroomsForDateAndTime(formatter.parse(date), classNumber);
         return Response.ok(gson.toJson(classrooms)).build();

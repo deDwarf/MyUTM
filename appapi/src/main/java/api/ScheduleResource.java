@@ -2,16 +2,22 @@ package api;
 
 import com.google.gson.reflect.TypeToken;
 import core.Roles;
+import exceptions.InvalidDateFormatException;
 import pojos.RegularScheduleEntry;
+import pojos.ScheduleEntry;
+import pojos.Student;
+import pojos.Teacher;
 
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -64,5 +70,106 @@ public class ScheduleResource extends CommonResource {
     public Response registerDatedClass() {
         // groups, teacher, date, time, classroom, subject, subject_type
         return RESPONSE_NOT_IMPLEMENTED;
+    }
+
+    /**
+     * Returns schedule for given group and day
+     *
+     * @param groupId ID of a group for which schedule is requested.
+     * @param date day for which schedule is requested. Only date part is considered
+     * @return List of objects with all necessary schedule information, both "regular" and "dated".
+     *         Cancelled regular classes will be marked with "cancelled" flag set to True.
+     *         Cancelled dated classes are not persisted and thus won't be returned by this method.
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("groups/{group}/{date}")
+    public Response getStudentScheduleForDay(
+            @PathParam("group") Long groupId,
+            @PathParam("date") String date,
+            @Context SecurityContext sec) throws SQLException {
+        Date parsedDate = parseDate(date);
+        List<ScheduleEntry> schedule = db.getGroupScheduleForDay(parsedDate, groupId);
+
+        return Response.ok(gson.toJson(schedule)).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("groups/{group}/")
+    public Response getGroupSchedule(@PathParam("group") Long groupId) throws SQLException {
+        List<RegularScheduleEntry> schedule = db.getRegularSchedule(groupId);
+
+        return Response.ok(gson.toJson(schedule)).build();
+    }
+
+    /**
+     * Returns schedule for given teacher and day
+     *
+     * @param teacherId teacher for which schedule is requested. This param should be teacher ID
+     * @param date day for which schedule is requested. Only date part is considered
+     * @return Same as {@link api.ScheduleResource#getStudentScheduleForDay(Long, String, SecurityContext)}
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("teachers/{teacherId}/{date}")
+    public Response getTeacherScheduleForDay(
+            @PathParam("teacherId") Long teacherId,
+            @PathParam("date") String date,
+            @Context SecurityContext sec) throws SQLException {
+        Date parsedDate = parseDate(date);
+        List<ScheduleEntry> schedule = db.getTeacherScheduleForDay(parsedDate, teacherId);
+
+        return Response.ok(gson.toJson(schedule)).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("teachers/{teacherId}/")
+    public Response getTeacherSchedule(@PathParam("teacherId") String teacherId) {
+        /*
+        repetitive: {
+            odd: [scheduleUnit]
+            even: [scheduleUnit]
+            both: [scheduleUnit]
+        }
+        dated: {
+            leftBorderDate: date
+            rightBorderDate: date
+            classes: [
+                scheduleUnit
+            ]
+        }
+         */
+        return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("my/{from-date}")
+    @RolesAllowed({Roles.STUDENT, Roles.TEACHER})
+    public Response getMySchedule(@Context SecurityContext sec,
+                                  @PathParam("from-date") String fromDate) throws SQLException {
+        if (sec.isUserInRole(Roles.STUDENT)) {
+            Student st = db.getStudent(sec.getUserPrincipal().getName());
+            return getStudentScheduleForDay(st.getGroupId(), fromDate, sec);
+        } else if (sec.isUserInRole(Roles.TEACHER)) {
+            Teacher t = db.getTeacher(sec.getUserPrincipal().getName());
+            return getTeacherScheduleForDay(t.getTeacherId(), fromDate, sec);
+        } else {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Unrecognized role").build();
+        }
+    }
+
+    private Date parseDate(String date) {
+        final SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd");
+        Date parsedDate;
+        try {
+            parsedDate = f.parse(date);
+        } catch (ParseException e) {
+            throw new InvalidDateFormatException("date", date);
+        }
+        return parsedDate;
     }
 }

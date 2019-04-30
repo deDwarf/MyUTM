@@ -3,6 +3,7 @@ package api;
 import pojos.Group;
 
 import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.sql.SQLException;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 public class GroupsResource extends CommonResource {
 
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
     public Response getListOfGroups(@QueryParam("names_only") Boolean namesOnlyFlag) throws SQLException {
         if (namesOnlyFlag == null || !namesOnlyFlag) {
             List<Group> groups = db.getGroups();
