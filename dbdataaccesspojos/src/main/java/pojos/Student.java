@@ -5,7 +5,7 @@ public class Student {
 
   private long studentId;
   private long groupId;
-  private long groupNumber;
+  private String groupNumber;
   private String firstNm;
   private String secondNm;
   private String internalEmailAddress;
@@ -75,11 +75,11 @@ public class Student {
   }
 
 
-  public long getGroupNumber() {
+  public String getGroupNumber() {
     return groupNumber;
   }
 
-  public void setGroupNumber(long groupNumber) {
+  public void setGroupNumber(String groupNumber) {
     this.groupNumber = groupNumber;
   }
 
