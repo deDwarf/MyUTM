@@ -5,7 +5,7 @@ import exporter.ClassSectionTypeResolver;
 import exporter.ScheduleExporter;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import pojos.RegularScheduleEntry;
+import pojos.GroupedRegularScheduleEntry;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class ClassSectionStyleFormatter {
         this.wb = wb;
     }
 
-    public void format(List<RegularScheduleEntry> re, Cell[] cells) {
+    public void format(List<GroupedRegularScheduleEntry> re, Cell[] cells) {
         assert cells != null;
         assert cells.length == 6;
 
@@ -44,7 +44,7 @@ public class ClassSectionStyleFormatter {
         }
 
         @Override
-        public void onNoParity(RegularScheduleEntry e, Cell[] cells) {
+        public void onNoParity(GroupedRegularScheduleEntry e, Cell[] cells) {
             ICellStyleManager s = ColoredCellStyleManager.getInstance(wb, e.getSubjectTypeId());
             cells[0].setCellStyle(s.getTopCell());
             cells[1].setCellStyle(s.getMiddleCellBold());
@@ -55,14 +55,14 @@ public class ClassSectionStyleFormatter {
         }
 
         @Override
-        public void onParityBoth(RegularScheduleEntry odd, RegularScheduleEntry even, Cell[] cells) {
+        public void onParityBoth(GroupedRegularScheduleEntry odd, GroupedRegularScheduleEntry even, Cell[] cells) {
             ICellStyleManager odds = ColoredCellStyleManager.getInstance(wb, odd.getSubjectTypeId());
             ICellStyleManager evens = ColoredCellStyleManager.getInstance(wb, even.getSubjectTypeId());
             styleParity(odds, evens, cells);
         }
 
         @Override
-        public void onParityEvenOnly(RegularScheduleEntry even, Cell[] cells) {
+        public void onParityEvenOnly(GroupedRegularScheduleEntry even, Cell[] cells) {
             ICellStyleManager evens = ColoredCellStyleManager.getInstance(wb, even.getSubjectTypeId());
             ICellStyleManager emptys = ColoredCellStyleManager.getInstance(wb, (long) -1);
             styleParity(emptys, evens, cells);
@@ -70,7 +70,7 @@ public class ClassSectionStyleFormatter {
         }
 
         @Override
-        public void onParityOddOnly(RegularScheduleEntry odd, Cell[] cells) {
+        public void onParityOddOnly(GroupedRegularScheduleEntry odd, Cell[] cells) {
             ICellStyleManager odds = ColoredCellStyleManager.getInstance(wb, odd.getSubjectTypeId());
             ICellStyleManager emptys = ColoredCellStyleManager.getInstance(wb, (long) -1);
             styleParity(odds, emptys, cells);

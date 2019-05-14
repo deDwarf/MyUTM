@@ -23,7 +23,7 @@ import org.apache.poi.ss.util.CellRangeAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojos.Group;
-import pojos.RegularScheduleEntry;
+import pojos.GroupedRegularScheduleEntry;
 
 public class ScheduleExporter implements IScheduleExporter {
     private static final String studentScheduleTemplatePath = "regular_schedule_template.xls";
@@ -44,9 +44,9 @@ public class ScheduleExporter implements IScheduleExporter {
             Sheet sheet = wb.getSheet("Schedule");
             ClassSectionStyleFormatter styleFormatter = new ClassSectionStyleFormatter(wb);
             ClassSectionTextFormatter textFormatter = new ClassSectionTextFormatter();
-            List<RegularScheduleEntry> schedule = new ArrayList<>();
+            List<GroupedRegularScheduleEntry> schedule = new ArrayList<>();
             for(long i: ids) {
-                schedule.addAll(db.getRegularSchedule(i));
+                schedule.addAll(db.getGroupedRegularScheduleByGroup(i));
             }
 
             this.initGroupColumnDefs(ids, groups, wb, sheet);
@@ -86,7 +86,7 @@ public class ScheduleExporter implements IScheduleExporter {
         return groupToColIndexMapping;
     }
 
-    private void populatePayload(List<RegularScheduleEntry> sch, List<Long> groupIds, Sheet sh,
+    private void populatePayload(List<GroupedRegularScheduleEntry> sch, List<Long> groupIds, Sheet sh,
                                  ClassSectionStyleFormatter sFormatter, ClassSectionTextFormatter tFormatter) {
         // very very deep loop
         for (int day = 0; day < TemplateConstant.NUM_OF_DAYS.val; day++) {
@@ -94,23 +94,23 @@ public class ScheduleExporter implements IScheduleExporter {
             for (int classNumber = 1; classNumber <= TemplateConstant.NUM_OF_CLASSES.val; classNumber++) {
                 log.info("Processing day <{}>, class number <{}>", day, classNumber);
                 final int closureClassNumber = classNumber;
-                List<RegularScheduleEntry> schForTime = sch.stream()
+                List<GroupedRegularScheduleEntry> schForTime = sch.stream()
                         .filter(e -> e.getWeekDay() == closureDay && e.getClassNumber() == closureClassNumber)
                         .collect(Collectors.toList());
 
                 int i = 0;
                 while (i < groupIds.size())  {
                     final int closureI = i;
-                    List<RegularScheduleEntry> schForTimeAndGroup = schForTime.stream()
-                            .filter(e -> e.getGroupId() == groupIds.get(closureI))
+                    List<GroupedRegularScheduleEntry> schForTimeAndGroup = schForTime.stream()
+                            .filter(e -> e.getGroups().containsKey(groupIds.get(closureI)))
                             .collect(Collectors.toList());
                     ClassSectionType classSectionType = ClassSectionType.getCellType(schForTimeAndGroup);
                     // lookahead to determine cells to be merged
                     int j;
                     for (j = i + 1; j < groupIds.size(); j++) {
                         final int closureJ = j;
-                        List<RegularScheduleEntry> schForTimeAndGroup1 = schForTime.stream()
-                                .filter(e -> e.getGroupId() == groupIds.get(closureJ) && e.getWeekParity() == null)
+                        List<GroupedRegularScheduleEntry> schForTimeAndGroup1 = schForTime.stream()
+                                .filter(e -> e.getGroups().containsKey(groupIds.get(closureJ)) && e.getWeekParity() == null)
                                 .collect(Collectors.toList());
                         ClassSectionType nextClassSectionType = ClassSectionType.getCellType(schForTimeAndGroup1);
                         if (classSectionType == ClassSectionType.EMPTY || nextClassSectionType == ClassSectionType.EMPTY
@@ -169,7 +169,7 @@ public class ScheduleExporter implements IScheduleExporter {
         }
     }
 
-    private boolean isSameDayTeacherAndSubject(RegularScheduleEntry e, RegularScheduleEntry e2) {
+    private boolean isSameDayTeacherAndSubject(GroupedRegularScheduleEntry e, GroupedRegularScheduleEntry e2) {
         return e.getSubjectId() == e2.getSubjectId()
                 && e.getTeacherId() == e2.getTeacherId()
                 && e.getClassroomId() == e2.getClassroomId()

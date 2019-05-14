@@ -1,6 +1,6 @@
 package exporter;
 
-import pojos.RegularScheduleEntry;
+import pojos.GroupedRegularScheduleEntry;
 import java.util.List;
 
 public enum ClassSectionType {
@@ -25,7 +25,7 @@ public enum ClassSectionType {
         this.subgroups = subgroups;
     }
 
-    public static ClassSectionType getCellType(List<RegularScheduleEntry> es) {
+    public static ClassSectionType getCellType(List<GroupedRegularScheduleEntry> es) {
         return ClassSectionTypeResolver.resolve(es);
     }
 

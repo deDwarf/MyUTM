@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.*;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
-import pojos.RegularScheduleEntry;
+import pojos.GroupedRegularScheduleEntry;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,7 +20,7 @@ public class ClassSectionTextFormatter {
         hs = new HashMap<>();
     }
 
-    public void format(List<RegularScheduleEntry> sch, Cell[] cells, int maxLength) {
+    public void format(List<GroupedRegularScheduleEntry> sch, Cell[] cells, int maxLength) {
         assert cells != null;
         assert cells.length == 6;
 
@@ -95,7 +95,7 @@ public class ClassSectionTextFormatter {
         }
 
         @Override
-        public void onNoParity(RegularScheduleEntry e, Cell[] cells) {
+        public void onNoParity(GroupedRegularScheduleEntry e, Cell[] cells) {
             Pair<String, String> subjname = formatTwoStringSubjectName(e.getSubjectName()
                     , e.getSubjectTypeAbbreviated(), e.getSubjectNameAbbreviated(), maxCellLength);
             cells[1].setCellValue(subjname.getLeft());
@@ -105,20 +105,20 @@ public class ClassSectionTextFormatter {
         }
 
         @Override
-        public void onParityBoth(RegularScheduleEntry odd, RegularScheduleEntry even, Cell[] cells) {
+        public void onParityBoth(GroupedRegularScheduleEntry odd, GroupedRegularScheduleEntry even, Cell[] cells) {
             onParityEvenOnly(even, cells);
             onParityEvenOnly(odd, cells);
         }
 
         @Override
-        public void onParityOddOnly(RegularScheduleEntry odd, Cell[] cells) {
+        public void onParityOddOnly(GroupedRegularScheduleEntry odd, Cell[] cells) {
             cells[0].setCellValue(odd.getSubjectTypeAbbreviated().concat(" ").concat(odd.getSubjectNameAbbreviated()));
             cells[1].setCellValue(odd.getClassroomName());
             cells[2].setCellValue(odd.getTeacherFullName());
         }
 
         @Override
-        public void onParityEvenOnly(RegularScheduleEntry even, Cell[] cells) {
+        public void onParityEvenOnly(GroupedRegularScheduleEntry even, Cell[] cells) {
             cells[3].setCellValue(even.getSubjectTypeAbbreviated().concat(" ").concat(even.getSubjectNameAbbreviated()));
             cells[4].setCellValue(even.getClassroomName());
             cells[5].setCellValue(even.getTeacherFullName());

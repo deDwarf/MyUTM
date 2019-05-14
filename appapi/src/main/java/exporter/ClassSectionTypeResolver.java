@@ -1,7 +1,7 @@
 package exporter;
 
 import org.apache.poi.ss.usermodel.Cell;
-import pojos.RegularScheduleEntry;
+import pojos.GroupedRegularScheduleEntry;
 
 import java.util.List;
 import java.util.Objects;
@@ -10,11 +10,11 @@ import java.util.Optional;
 public class ClassSectionTypeResolver {
     private static StubHandler STUB_HANDLER = new StubHandler();
 
-    public static ClassSectionType resolve(List<RegularScheduleEntry> sch) {
+    public static ClassSectionType resolve(List<GroupedRegularScheduleEntry> sch) {
         return resolve(sch, STUB_HANDLER, null);
     }
 
-    public static ClassSectionType resolve(List<RegularScheduleEntry> sch, ClassSectionTypeHandler h, Cell[] cells) {
+    public static ClassSectionType resolve(List<GroupedRegularScheduleEntry> sch, ClassSectionTypeHandler h, Cell[] cells) {
         if (sch == null || sch.isEmpty()) {
             h.onEmpty(cells);
             return ClassSectionType.EMPTY;
@@ -38,10 +38,10 @@ public class ClassSectionTypeResolver {
             }
         }
         if (sch.size() == 2) {
-            Optional<RegularScheduleEntry> odd = sch.stream()
+            Optional<GroupedRegularScheduleEntry> odd = sch.stream()
                     .filter(e -> "odd".equals(e.getWeekParity()))
                     .findFirst();
-            Optional<RegularScheduleEntry> even = sch.stream()
+            Optional<GroupedRegularScheduleEntry> even = sch.stream()
                     .filter(e -> "even".equals(e.getWeekParity()))
                     .findFirst();
             if (odd.isPresent() && odd.get().getSubgroup() == null
@@ -66,15 +66,15 @@ public class ClassSectionTypeResolver {
         public void onError(Cell[] cells) { }
 
         @Override
-        public void onNoParity(RegularScheduleEntry e, Cell[] cells) { }
+        public void onNoParity(GroupedRegularScheduleEntry e, Cell[] cells) { }
 
         @Override
-        public void onParityBoth(RegularScheduleEntry odd, RegularScheduleEntry even, Cell[] cells) { }
+        public void onParityBoth(GroupedRegularScheduleEntry odd, GroupedRegularScheduleEntry even, Cell[] cells) { }
 
         @Override
-        public void onParityOddOnly(RegularScheduleEntry odd, Cell[] cells) { }
+        public void onParityOddOnly(GroupedRegularScheduleEntry odd, Cell[] cells) { }
 
         @Override
-        public void onParityEvenOnly(RegularScheduleEntry even, Cell[] cells) { }
+        public void onParityEvenOnly(GroupedRegularScheduleEntry even, Cell[] cells) { }
     }
 }

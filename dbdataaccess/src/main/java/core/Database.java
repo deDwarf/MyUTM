@@ -32,6 +32,7 @@ public class Database {
     private final String getScheduleForDayTemplateSQL;
     private final String getStudentByEmail;
     private final String getStudentById;
+    private final String getGroupedSchedule;
 
     private Database() {
         this.getScheduleForDayTemplateSQL = readSQLFromResources(
@@ -42,6 +43,8 @@ public class Database {
                 "select_student_by_email.sql");
         this.getFreeClassrooms = readSQLFromResources(
                 "select_free_classrooms_for_time.sql");
+        this.getGroupedSchedule = readSQLFromResources(
+                "select_grouped_regular_schedule.sql");
     }
 
     protected static String readSQLFromResources(String fileName) {
@@ -177,6 +180,19 @@ public class Database {
                 " where group_id = ?" +
                 " order by group_number, week_day, class_number, week_parity", h, groupId);
     }
+
+    public List<GroupedRegularScheduleEntry> getGroupedRegularScheduleByGroup(Long groupId)
+            throws SQLException {
+        final ResultSetHandler<List<GroupedRegularScheduleEntry>> h = new BeanListHandler<>(GroupedRegularScheduleEntry.class, rowProcessor);
+        return runner.query(this.getGroupedSchedule, h, groupId, -1);
+    }
+
+    public List<GroupedRegularScheduleEntry> getGroupedRegularScheduleByTeacher(Long teacherId)
+            throws SQLException {
+        final ResultSetHandler<List<GroupedRegularScheduleEntry>> h = new BeanListHandler<>(GroupedRegularScheduleEntry.class, rowProcessor);
+        return runner.query(this.getGroupedSchedule, h, -1, teacherId);
+    }
+
 
     // --- register schedule
     public RegularScheduleEntry registerRegularLesson(String table, RegularScheduleEntry data) throws SQLException {
