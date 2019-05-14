@@ -84,13 +84,33 @@ public class AuthAPI extends CommonResource {
                 response.put("access_token", newToken);
                 response.put("role", jwtClaims.get("role", String.class).toUpperCase());
                 response.put("username", jwtClaims.get("user", String.class).toUpperCase());
-                return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
+                return Response.ok(gson.toJson(response)).build();
             } catch (Exception e) {
                 return Response.status(Response.Status.FORBIDDEN).entity("Invalid token").build();
             }
         }
         else {
             return RESPONSE_BAD_REQUEST.entity("Unsupported grant type: " + grantType).build();
+        }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("tokeninfo/")
+    public Response tokeninfo(@QueryParam("access_token") String accessToken) {
+        Claims jwtClaims;
+        Map<String, String> response = new HashMap<>();
+        try {
+            jwtClaims = Jwts.parser()
+                    .setSigningKey(KEY)
+                    .parseClaimsJws(accessToken)
+                    .getBody();
+            response.put("user", jwtClaims.get("user", String.class));
+            response.put("role", jwtClaims.get("role", String.class));
+            response.put("exp", this.formatDate(jwtClaims.getExpiration()));
+            return Response.ok(gson.toJson(response)).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.FORBIDDEN).entity("Invalid token").build();
         }
     }
 

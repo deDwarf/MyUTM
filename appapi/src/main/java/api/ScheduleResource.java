@@ -2,7 +2,6 @@ package api;
 
 import com.google.gson.reflect.TypeToken;
 import core.Roles;
-import exceptions.InvalidDateFormatException;
 import pojos.RegularScheduleEntry;
 import pojos.ScheduleEntry;
 import pojos.Student;
@@ -15,8 +14,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.sql.SQLException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -160,16 +157,5 @@ public class ScheduleResource extends CommonResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Unrecognized role").build();
         }
-    }
-
-    private Date parseDate(String date) {
-        final SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd");
-        Date parsedDate;
-        try {
-            parsedDate = f.parse(date);
-        } catch (ParseException e) {
-            throw new InvalidDateFormatException("date", date);
-        }
-        return parsedDate;
     }
 }

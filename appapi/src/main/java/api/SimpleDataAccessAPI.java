@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojos.Group;
 import pojos.Student;
+import pojos.Teacher;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -26,7 +27,6 @@ public class SimpleDataAccessAPI extends CommonResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed({Roles.STUDENT, Roles.TEACHER, Roles.ADMIN})
     public Response hello() {
         return Response.status(200, "Hey there!").build();
     }
@@ -39,13 +39,15 @@ public class SimpleDataAccessAPI extends CommonResource {
         if (sec.isUserInRole(Roles.STUDENT)) {
             Student st = db.getStudent(sec.getUserPrincipal().getName());
             if (st == null) {
-                return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .entity("User not found").build();
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("User not found").build();
             }
             return Response.ok(gson.toJson(st)).build();
         } else if (sec.isUserInRole(Roles.TEACHER)) {
-            // TODO
-            return Response.status(Response.Status.NOT_IMPLEMENTED).build();
+            Teacher t = db.getTeacher(sec.getUserPrincipal().getName());
+            if (t == null) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("User not found").build();
+            }
+            return Response.ok(gson.toJson(t)).build();
         } else {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Unrecognized role").build();

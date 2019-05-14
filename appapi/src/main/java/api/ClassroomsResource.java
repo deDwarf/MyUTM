@@ -8,14 +8,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.sql.SQLException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 @Path("/classrooms")
 @PermitAll
 public class ClassroomsResource extends CommonResource {
-    protected static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getListOfClassrooms() throws SQLException {
@@ -39,7 +36,7 @@ public class ClassroomsResource extends CommonResource {
         if (date == null || classNumber == null) {
             return RESPONSE_BAD_REQUEST.entity("'date' and 'classNumber' fields should not be empty").build();
         }
-        List<Classroom> classrooms = db.getFreeClassroomsForDateAndTime(formatter.parse(date), classNumber);
+        List<Classroom> classrooms = db.getFreeClassroomsForDateAndTime(parseDate(date), classNumber);
         return Response.ok(gson.toJson(classrooms)).build();
     }
 
