@@ -27,6 +27,11 @@ public class ScheduleExporterTest {
 
     @Test
     public void testExportTeacherSchedule() throws Exception {
+        AppContext.getInstance().loadDatabaseController("db-remote.properties");
+
+        ScheduleExporter e = new ScheduleExporter();
+        File f = e.exportTeacherSchedule(Arrays.asList((long) 1, (long) 2));
+        System.out.println(f.getAbsolutePath());
     }
 
     @DataProvider

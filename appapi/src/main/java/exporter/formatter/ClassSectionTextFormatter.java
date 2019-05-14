@@ -11,13 +11,16 @@ import org.apache.poi.ss.usermodel.Cell;
 import pojos.GroupedRegularScheduleEntry;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ClassSectionTextFormatter {
     private static Map<Integer, ClassSectionTypeHandler> hs;
+    private Function<GroupedRegularScheduleEntry, String> f;
 
-    public ClassSectionTextFormatter() {
+    public ClassSectionTextFormatter(Function<GroupedRegularScheduleEntry, String> thirdCellContentExtractor) {
         hs = new HashMap<>();
+        this.f = thirdCellContentExtractor;
     }
 
     public void format(List<GroupedRegularScheduleEntry> sch, Cell[] cells, int maxLength) {
@@ -86,12 +89,11 @@ public class ClassSectionTextFormatter {
 
         @Override
         public void onEmpty(Cell[] cells) {
-
         }
 
         @Override
         public void onError(Cell[] cells) {
-
+            cells[0].setCellValue("Error");
         }
 
         @Override
@@ -101,7 +103,7 @@ public class ClassSectionTextFormatter {
             cells[1].setCellValue(subjname.getLeft());
             cells[2].setCellValue(subjname.getRight());
             cells[3].setCellValue(e.getClassroomName());
-            cells[4].setCellValue(e.getTeacherFullName());
+            cells[4].setCellValue(f.apply(e));
         }
 
         @Override
@@ -114,14 +116,14 @@ public class ClassSectionTextFormatter {
         public void onParityOddOnly(GroupedRegularScheduleEntry odd, Cell[] cells) {
             cells[0].setCellValue(odd.getSubjectTypeAbbreviated().concat(" ").concat(odd.getSubjectNameAbbreviated()));
             cells[1].setCellValue(odd.getClassroomName());
-            cells[2].setCellValue(odd.getTeacherFullName());
+            cells[2].setCellValue(f.apply(odd));
         }
 
         @Override
         public void onParityEvenOnly(GroupedRegularScheduleEntry even, Cell[] cells) {
             cells[3].setCellValue(even.getSubjectTypeAbbreviated().concat(" ").concat(even.getSubjectNameAbbreviated()));
             cells[4].setCellValue(even.getClassroomName());
-            cells[5].setCellValue(even.getTeacherFullName());
+            cells[5].setCellValue(f.apply(even));
         }
     }
 }

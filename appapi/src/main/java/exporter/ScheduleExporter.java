@@ -5,6 +5,7 @@ import exporter.formatter.ClassSectionStyleFormatter;
 import exporter.formatter.ClassSectionTextFormatter;
 import exporter.utils.POIUtils;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 
@@ -24,66 +25,120 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojos.Group;
 import pojos.GroupedRegularScheduleEntry;
+import pojos.Teacher;
 
+// TODO refactor: code duplicates
 public class ScheduleExporter implements IScheduleExporter {
-    private static final String studentScheduleTemplatePath = "regular_schedule_template.xls";
+    private static final String studentScheduleTemplatePath = "regular_schedule_template_groups.xls";
     private static final String teacherScheduleTemplatePath = "regular_schedule_template_teachers.xls";
     private static final Logger log = LoggerFactory.getLogger(ScheduleExporter.class);
     private static final Database db = AppContext.getInstance().getDB();
 
     @Override
-    public File exportStudentSchedule(final List<Long> ids) throws IOException, SQLException {
+    public File exportStudentSchedule(final List<Long> ids) throws SQLException {
         List<Group> groups = db.getGroups();
         this.validateGroups(ids, groups);
+        HSSFWorkbook wb = this.openTemplate(studentScheduleTemplatePath);
 
-        File f = File.createTempFile("filled-schedule-template-", ".xls");
-        FileOutputStream fout = new FileOutputStream(f);
-        java.net.URL url = IOUtils.resourceToURL(studentScheduleTemplatePath, ScheduleExporter.class.getClassLoader());
-        try {
-            HSSFWorkbook wb = new HSSFWorkbook(new FileInputStream(new File(url.toURI())));
-            Sheet sheet = wb.getSheet("Schedule");
-            ClassSectionStyleFormatter styleFormatter = new ClassSectionStyleFormatter(wb);
-            ClassSectionTextFormatter textFormatter = new ClassSectionTextFormatter();
-            List<GroupedRegularScheduleEntry> schedule = new ArrayList<>();
-            for(long i: ids) {
-                schedule.addAll(db.getGroupedRegularScheduleByGroup(i));
+        Sheet sheet = wb.getSheet("Schedule");
+        ClassSectionStyleFormatter styleFormatter = new ClassSectionStyleFormatter(wb);
+        ClassSectionTextFormatter textFormatter = new ClassSectionTextFormatter(GroupedRegularScheduleEntry::getTeacherFullName);
+        List<GroupedRegularScheduleEntry> schedule = new ArrayList<>();
+        for(long i: ids) {
+            schedule.addAll(db.getGroupedRegularScheduleByTeacher(i));
+        }
+
+        Map<Long, Integer> map = this.createPayloadColumns(ids, wb, sheet);
+        this.initializeColumnHeadersForGroups(map, groups, sheet);
+        this.populatePayload(schedule, ids, sheet, styleFormatter, textFormatter);
+
+        return this.saveAsFileAndClose(wb, "filled-schedule-template-");
+    }
+
+    @Override
+    public File exportTeacherSchedule(List<Long> ids) throws SQLException  {
+        List<Teacher> teachers = db.getTeachers();
+        // TODO validation
+        HSSFWorkbook wb = this.openTemplate(teacherScheduleTemplatePath);
+
+        Sheet sheet = wb.getSheet("Schedule");
+        ClassSectionStyleFormatter styleFormatter = new ClassSectionStyleFormatter(wb);
+        ClassSectionTextFormatter textFormatter = new ClassSectionTextFormatter(e -> {
+            StringBuilder b = new StringBuilder();
+            for(GroupedRegularScheduleEntry.Groups g: e.getGroups().values()) {
+                b.append(g.getGroupNumber()).append(", ");
             }
+            b.deleteCharAt(b.length() - 1);
+            b.deleteCharAt(b.length() - 1);
+            return b.toString();
+        });
 
-            this.initGroupColumnDefs(ids, groups, wb, sheet);
-            this.populatePayload(schedule, ids, sheet, styleFormatter, textFormatter);
+        List<GroupedRegularScheduleEntry> schedule = new ArrayList<>();
+        for(long i: ids) {
+            schedule.addAll(db.getGroupedRegularScheduleByTeacher(i));
+        }
+
+        Map<Long, Integer> map = this.createPayloadColumns(ids, wb, sheet);
+        this.initializeColumnHeadersForTeachers(map, teachers, sheet);
+        this.populatePayloadForTeachers(schedule, ids, sheet, styleFormatter, textFormatter);
+
+        return saveAsFileAndClose(wb, "filled-teacher-schedule-template-");
+    }
+
+    private HSSFWorkbook openTemplate(String templatePath) {
+        try {
+            java.net.URL url = IOUtils.resourceToURL(studentScheduleTemplatePath, ScheduleExporter.class.getClassLoader());
+            return new HSSFWorkbook(new FileInputStream(new File(url.toURI())));
+        } catch (URISyntaxException | IOException e) {
+            throw new RuntimeException("Error while schedule export: cannot read from template file", e);
+        }
+    }
+
+    private File saveAsFileAndClose(Workbook wb, String prefix){
+        try {
+            File f = File.createTempFile(prefix, ".xls");
+            FileOutputStream fout = new FileOutputStream(f);
 
             wb.write(fout);
             fout.flush();
             fout.close();
             wb.close();
             return f;
-        } catch (URISyntaxException e) {
-            throw new IOException("Error while schedule export: cannot read from template file");
+        } catch (IOException e) {
+            throw new RuntimeException("Error while schedule export: couldn`t save file properly");
         }
     }
 
-    @Override
-    public File exportTeacherSchedule(List<Long> ids) {
-        return null;
-    }
-
-    private Map<Long, Integer> initGroupColumnDefs(List<Long> ids, List<Group> groups, Workbook wb, Sheet sh) {
+    private Map<Long, Integer> createPayloadColumns(List<Long> ids, Workbook wb, Sheet sh) {
         Map<Long, Integer> groupToColIndexMapping = new HashMap<>();
         groupToColIndexMapping.put(ids.get(0), TemplateConstant.GROUP_LIST_START_COL.val);
         for (int i = 1; i < ids.size(); i++) {
             POIUtils.insertNewColumnBefore(wb, sh, TemplateConstant.GROUP_LIST_START_COL.val);
             groupToColIndexMapping.put(ids.get(i), (TemplateConstant.GROUP_LIST_START_COL.val + i));
         }
-        log.info("initialized column placeholders for groups. Id to index mapping: {}", groupToColIndexMapping);
+        log.info("initialized column placeholders for header namings. Id to index mapping: {}", groupToColIndexMapping);
 
+        return groupToColIndexMapping;
+    }
+
+    private void initializeColumnHeadersForGroups(Map<Long, Integer> mapping, List<Group> groups, Sheet sh) {
         for (Group group : groups) {
-            Integer index = groupToColIndexMapping.get(group.getGroupId());
+            Integer index = mapping.get(group.getGroupId());
             if (index != null) {
                 sh.getRow(TemplateConstant.GROUP_LIST_DATA_ROW.val).getCell(index).setCellValue(group.getGroupName());
             }
         }
+    }
 
-        return groupToColIndexMapping;
+    private void initializeColumnHeadersForTeachers(Map<Long, Integer> mapping, List<Teacher> teachers, Sheet sh) {
+        for (Teacher t : teachers) {
+            Integer index = mapping.get(t.getTeacherId());
+            if (index != null) {
+                sh.getRow(TemplateConstant.GROUP_LIST_DATA_ROW.val).getCell(index).setCellValue(
+                        StringUtils.capitalize(t.getSecondNm().concat(" ").concat(t.getFirstNm()))
+                );
+            }
+        }
     }
 
     private void populatePayload(List<GroupedRegularScheduleEntry> sch, List<Long> groupIds, Sheet sh,
@@ -146,6 +201,41 @@ public class ScheduleExporter implements IScheduleExporter {
                     sFormatter.format(schForTimeAndGroup, cells);
                     // continue starting for j - if there was a merge, don`t jump over merged cells
                     i = j;
+                }
+            }
+        }
+    }
+
+    private void populatePayloadForTeachers(List<GroupedRegularScheduleEntry> sch, List<Long> teacherIds, Sheet sh,
+                                            ClassSectionStyleFormatter sFormatter, ClassSectionTextFormatter tFormatter) {
+        // very very deep loop
+        for (int day = 0; day < TemplateConstant.NUM_OF_DAYS.val; day++) {
+            final int closureDay = day;
+            for (int classNumber = 1; classNumber <= TemplateConstant.NUM_OF_CLASSES.val; classNumber++) {
+                log.info("Processing day <{}>, class number <{}>", day, classNumber);
+                final int closureClassNumber = classNumber;
+                List<GroupedRegularScheduleEntry> schForTime = sch.stream()
+                        .filter(e -> e.getWeekDay() == closureDay && e.getClassNumber() == closureClassNumber)
+                        .collect(Collectors.toList());
+
+                for (int i = 0; i < teacherIds.size(); i++) {
+                    final int closureI = i;
+                    List<GroupedRegularScheduleEntry> schForTimeAndGroup = schForTime.stream()
+                            .filter(e -> e.getTeacherId() == teacherIds.get(closureI))
+                            .collect(Collectors.toList());
+
+                    CellAddress base = TemplateConstant.getStartCellAddr(day, classNumber);
+                    CellRangeAddress dataCol = new CellRangeAddress(base.getRow(),
+                            base.getRow() + TemplateConstant.ONE_CLASS_SECTION_CELL_HEIGHT.val - 1,
+                            base.getColumn() + i,
+                            base.getColumn() + i);
+                    Cell[] cells = IteratorUtils.toList(dataCol.iterator(), 6)
+                            .stream()
+                            .map(e -> sh.getRow(e.getRow()).getCell(e.getColumn()))
+                            .toArray(Cell[]::new);
+
+                    tFormatter.format(schForTimeAndGroup, cells, TemplateConstant.CELL_LENGTH.val);
+                    sFormatter.format(schForTimeAndGroup, cells);
                 }
             }
         }
