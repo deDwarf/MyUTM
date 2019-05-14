@@ -1,4 +1,5 @@
 package exporter;
+import com.google.common.base.MoreObjects;
 import core.AppContext;
 import core.Database;
 import exporter.formatter.ClassSectionStyleFormatter;
@@ -45,7 +46,7 @@ public class ScheduleExporter implements IScheduleExporter {
         ClassSectionTextFormatter textFormatter = new ClassSectionTextFormatter(GroupedRegularScheduleEntry::getTeacherFullName);
         List<GroupedRegularScheduleEntry> schedule = new ArrayList<>();
         for(long i: ids) {
-            schedule.addAll(db.getGroupedRegularScheduleByTeacher(i));
+            schedule.addAll(db.getGroupedRegularScheduleByGroup(i));
         }
 
         Map<Long, Integer> map = this.createPayloadColumns(ids, wb, sheet);
@@ -87,7 +88,7 @@ public class ScheduleExporter implements IScheduleExporter {
 
     private HSSFWorkbook openTemplate(String templatePath) {
         try {
-            java.net.URL url = IOUtils.resourceToURL(studentScheduleTemplatePath, ScheduleExporter.class.getClassLoader());
+            java.net.URL url = IOUtils.resourceToURL(templatePath, ScheduleExporter.class.getClassLoader());
             return new HSSFWorkbook(new FileInputStream(new File(url.toURI())));
         } catch (URISyntaxException | IOException e) {
             throw new RuntimeException("Error while schedule export: cannot read from template file", e);
@@ -135,8 +136,11 @@ public class ScheduleExporter implements IScheduleExporter {
             Integer index = mapping.get(t.getTeacherId());
             if (index != null) {
                 sh.getRow(TemplateConstant.GROUP_LIST_DATA_ROW.val).getCell(index).setCellValue(
-                        StringUtils.capitalize(t.getSecondNm().concat(" ").concat(t.getFirstNm()))
-                );
+                        StringUtils.capitalize(
+                                MoreObjects.firstNonNull(t.getSecondNm(), "").concat("\n")
+                                .concat(MoreObjects.firstNonNull(t.getFirstNm(), "")).concat("\n")
+                                .concat(MoreObjects.firstNonNull(t.getMiddleNm(), ""))
+                        ));
             }
         }
     }
