@@ -1,5 +1,6 @@
 package api;
 
+import api.common.CommonResource;
 import pojos.Classroom;
 
 import javax.annotation.security.PermitAll;

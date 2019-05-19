@@ -1,5 +1,6 @@
 package api;
 
+import api.common.CommonResource;
 import authpojos.Account;
 import core.AppContext;
 import core.Database;
@@ -11,6 +12,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import pojos.Teacher;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -39,6 +41,7 @@ public class AuthAPI extends CommonResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/teapot")
     public Response stub() {
         return Response.status(418, "I`m a teapot!").build();
     }
@@ -152,21 +155,21 @@ public class AuthAPI extends CommonResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("register/teacher/")
     public Response registerTeacher(@QueryParam("teacherId") BigInteger teacherId,
-                                 @QueryParam("username") String username,
-                                 @QueryParam("password") String password)
+                                    @QueryParam("password") String password)
             throws CannotPerformOperationException, SQLException {
-        if (username == null || password == null || teacherId == null) {
-            return RESPONSE_BAD_REQUEST.entity("username, password and teacherId must not be null").build();
+        if (password == null || teacherId == null) {
+            return RESPONSE_BAD_REQUEST.entity("password and teacherId must not be null").build();
         }
         Map<String, String> response = new HashMap<>();
-        if (db.getAccountByUsername(username) != null) {
+        Teacher t = db.getTeacher(teacherId.longValue());
+        if (db.getAccountByUsername(t.getPrimaryEmail()) != null) {
             response.put("success", "false");
-            response.put("reason", "Specified email address is already in use");
+            response.put("reason", "Specified teacher already has an account");
             response.put("reason_code", "2");
             return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
         }
         String passwordHash = PasswordStorage.createHash(password);
-        BigInteger acctId = db.createUserAccount(username, passwordHash, Roles.TEACHER);
+        BigInteger acctId = db.createUserAccount(t.getPrimaryEmail(), passwordHash, Roles.TEACHER);
         db.linkTeacherWithAccount(teacherId, acctId);
         response.put("success", "true");
 

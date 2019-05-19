@@ -1,5 +1,6 @@
 package api;
 
+import api.common.CommonResource;
 import core.Roles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

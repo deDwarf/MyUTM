@@ -1,5 +1,6 @@
 package api;
 
+import api.common.CommonResource;
 import core.InspectionsService;
 import pojos.RegularScheduleEntry;
 

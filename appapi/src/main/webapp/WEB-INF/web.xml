@@ -5,19 +5,16 @@
          version="4.0">
     
     <servlet>
-        <servlet-name>fcimappi</servlet-name>
+        <servlet-name>api</servlet-name>
         <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
-        <!--<init-param>-->
-            <!--<param-name>jersey.config.server.provider.packages</param-name>-->
-            <!--<param-value>api</param-value>-->
-        <!--</init-param>-->
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
             <param-value>core.JaxRsAppConfig</param-value>
         </init-param>
     </servlet>
+
     <servlet-mapping>
-        <servlet-name>fcimappi</servlet-name>
+        <servlet-name>api</servlet-name>
         <url-pattern>/*</url-pattern>
     </servlet-mapping>
 </web-app>

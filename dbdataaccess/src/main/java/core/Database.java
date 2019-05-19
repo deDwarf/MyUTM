@@ -23,16 +23,17 @@ import java.util.List;
 // TODO make subject type id non-null
 
 public class Database {
-    private static final RowProcessor rowProcessor = new BasicRowProcessor(new GenerousBeanProcessor());
-    private static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-    private DataSource src;
-    private QueryRunner runner;
+    protected static final RowProcessor rowProcessor = new BasicRowProcessor(new GenerousBeanProcessor());
+    protected static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+    protected DataSource src;
+    protected QueryRunner runner;
 
+    private final String getGroupedScheduleSQL;
     private final String getFreeClassrooms;
     private final String getScheduleForDayTemplateSQL;
     private final String getStudentByEmail;
     private final String getStudentById;
-    private final String getGroupedSchedule;
+    private final String getGroupedRegularSchedule;
 
     private Database() {
         this.getScheduleForDayTemplateSQL = readSQLFromResources(
@@ -43,8 +44,10 @@ public class Database {
                 "select_student_by_email.sql");
         this.getFreeClassrooms = readSQLFromResources(
                 "select_free_classrooms_for_time.sql");
-        this.getGroupedSchedule = readSQLFromResources(
+        this.getGroupedRegularSchedule = readSQLFromResources(
                 "select_grouped_regular_schedule.sql");
+        this.getGroupedScheduleSQL = readSQLFromResources(
+                "select_grouped_schedule_for_date.sql");
     }
 
     protected static String readSQLFromResources(String fileName) {
@@ -88,6 +91,7 @@ public class Database {
         return runner.query(getStudentById, rh, id);
     }
 
+
     public List<Teacher> getTeachers() throws SQLException {
         final ResultSetHandler<List<Teacher>> h = new BeanListHandler<>(Teacher.class, rowProcessor);
         return runner.query("select * from fcimapp.Teachers", h);
@@ -105,6 +109,7 @@ public class Database {
         final ResultSetHandler<Teacher> h = new BeanHandler<>(Teacher.class, rowProcessor);
         return runner.query("select * from fcimapp.Teachers where primary_email = ?", h, email.toLowerCase());
     }
+
 
     public List<Subject> getSubjects() throws SQLException {
         final ResultSetHandler<List<Subject>> h = new BeanListHandler<>(Subject.class, rowProcessor);
@@ -137,6 +142,7 @@ public class Database {
         return runner.query("select * from fcimapp.Classrooms where classroom_id = ?", h, id);
     }
 
+
     public List<Group> getGroups() throws SQLException {
         final ResultSetHandler<List<Group>> h = new BeanListHandler<>(Group.class, rowProcessor);
         return runner.query("select * from fcimapp.Groups", h);
@@ -158,6 +164,7 @@ public class Database {
         return runner.query("select distinct `group_name` from fcimapp.Groups", h);
     }
 
+
     public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, Long teacherId) throws SQLException {
         return getScheduleEntries(day, (long) -1, teacherId);
     }
@@ -173,6 +180,21 @@ public class Database {
         return runner.query(getScheduleForDayTemplateSQL, h, groupId, teacherId, date, groupId, teacherId, date);
     }
 
+    public List<GroupedScheduleEntry> getTeacherGroupedScheduleForDay(java.util.Date day, Long teacherId) throws SQLException {
+        return getGroupedScheduleEntries(day, (long) -1, teacherId);
+    }
+
+    public List<GroupedScheduleEntry> getGroupedGroupScheduleForDay(java.util.Date day, Long groupId) throws SQLException {
+        return getGroupedScheduleEntries(day, groupId, (long) -1);
+    }
+
+    private List<GroupedScheduleEntry> getGroupedScheduleEntries(java.util.Date day, Long groupId, Long teacherId)
+            throws SQLException {
+        final ResultSetHandler<List<GroupedScheduleEntry>> h = new BeanListHandler<>(GroupedScheduleEntry.class, rowProcessor);
+        String date = formatter.format(day);
+        return runner.query(getGroupedScheduleSQL, h, groupId, teacherId, date, groupId, teacherId, date);
+    }
+
     public List<RegularScheduleEntry> getRegularSchedule(Long groupId)
             throws SQLException {
         final ResultSetHandler<List<RegularScheduleEntry>> h = new BeanListHandler<>(RegularScheduleEntry.class, rowProcessor);
@@ -184,13 +206,13 @@ public class Database {
     public List<GroupedRegularScheduleEntry> getGroupedRegularScheduleByGroup(Long groupId)
             throws SQLException {
         final ResultSetHandler<List<GroupedRegularScheduleEntry>> h = new BeanListHandler<>(GroupedRegularScheduleEntry.class, rowProcessor);
-        return runner.query(this.getGroupedSchedule, h, groupId, -1);
+        return runner.query(this.getGroupedRegularSchedule, h, groupId, -1);
     }
 
     public List<GroupedRegularScheduleEntry> getGroupedRegularScheduleByTeacher(Long teacherId)
             throws SQLException {
         final ResultSetHandler<List<GroupedRegularScheduleEntry>> h = new BeanListHandler<>(GroupedRegularScheduleEntry.class, rowProcessor);
-        return runner.query(this.getGroupedSchedule, h, -1, teacherId);
+        return runner.query(this.getGroupedRegularSchedule, h, -1, teacherId);
     }
 
 

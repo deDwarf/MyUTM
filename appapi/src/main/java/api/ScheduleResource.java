@@ -1,11 +1,9 @@
 package api;
 
+import api.common.CommonResource;
 import com.google.gson.reflect.TypeToken;
 import core.Roles;
-import pojos.RegularScheduleEntry;
-import pojos.ScheduleEntry;
-import pojos.Student;
-import pojos.Teacher;
+import pojos.*;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
@@ -115,7 +113,7 @@ public class ScheduleResource extends CommonResource {
             @PathParam("date") String date,
             @Context SecurityContext sec) throws SQLException {
         Date parsedDate = parseDate(date);
-        List<ScheduleEntry> schedule = db.getTeacherScheduleForDay(parsedDate, teacherId);
+        List<GroupedScheduleEntry> schedule = db.getTeacherGroupedScheduleForDay(parsedDate, teacherId);
 
         return Response.ok(gson.toJson(schedule)).build();
     }
@@ -124,20 +122,6 @@ public class ScheduleResource extends CommonResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("teachers/{teacherId}/")
     public Response getTeacherSchedule(@PathParam("teacherId") String teacherId) {
-        /*
-        repetitive: {
-            odd: [scheduleUnit]
-            even: [scheduleUnit]
-            both: [scheduleUnit]
-        }
-        dated: {
-            leftBorderDate: date
-            rightBorderDate: date
-            classes: [
-                scheduleUnit
-            ]
-        }
-         */
         return Response.status(Response.Status.NOT_IMPLEMENTED).build();
     }
 
