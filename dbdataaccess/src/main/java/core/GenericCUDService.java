@@ -5,22 +5,26 @@ import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 import org.apache.commons.dbutils.handlers.ScalarHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class GenericCUDService<T> {
+    private Logger log = LoggerFactory.getLogger(this.getClass());
     private Database db;
     private String schemaName;
     private String tableName;
     private Class<T> pojo;
-    private List<Method> pojoGetters;
 
     private String idName;
+    private List<Method> pojoGetters;
     private Set<String> columnNames;
 
     private String preparedUpdateQuery;
@@ -36,6 +40,7 @@ public class GenericCUDService<T> {
         this.schemaName = schemaName;
         this.tableName = tableName;
         this.pojo = pojo;
+        pojoGetters = new ArrayList<>();
 
         MapHandler mh = new MapHandler();
         MapListHandler mlh = new MapListHandler();
@@ -46,7 +51,7 @@ public class GenericCUDService<T> {
         if (res == null || res.size() == 0) {
             throw new NoSuchElementException(tableName);
         }
-        columnNames = res.stream()
+        this.columnNames = res.stream()
                 .map(mapEntry -> ((String)mapEntry.get("COLUMN_NAME")).toUpperCase().trim())
                 .collect(Collectors.toSet());
 
@@ -56,11 +61,11 @@ public class GenericCUDService<T> {
         }
         idName = (String)key.get("COLUMN_NAME");
 
-        this.preparedUpdateQuery = String.format("UPDATE %s.%s SET %s = ? WHERE {$fieldName} = ?",
+        this.preparedUpdateQuery = String.format("UPDATE %s.%s SET {$fieldName} = ? WHERE %s = ?",
                 schemaName, tableName, idName);
         this.preparedDeleteQuery = String.format("DELETE FROM %s.%s WHERE %s = ?",
                 schemaName, tableName, idName);
-        this.preparedInsertQuery = this.generateInsertStringTemplate(pojo, res, schemaName + "." + tableName);
+        this.preparedInsertQuery = this.generateInsertStringTemplate(pojo, schemaName + "." + tableName);
     }
 
     /*
@@ -69,21 +74,19 @@ public class GenericCUDService<T> {
         - Wrong datatype for given field
         - constraint violation
          */
-    public void update(Long id, String fieldName, Object fieldValue) {
-        try {
-            fieldName = transformToColumnName(fieldName);
-            if (!columnNames.contains(fieldName.toUpperCase().trim())) {
-                throw new NoSuchElementException(fieldName);
-            }
-            db.runner.update(preparedUpdateQuery.replace("{$fieldName}", fieldName), fieldValue, id);
-        } catch (SQLException e) {
-            e.printStackTrace();
+    public void update(Long id, String fieldName, Object fieldValue) throws SQLException {
+        fieldName = transformToColumnName(fieldName);
+        if (!columnNames.contains(fieldName.toUpperCase().trim())) {
+            throw new NoSuchElementException(fieldName);
         }
+        String updateStatement = preparedUpdateQuery.replace("{$fieldName}", fieldName);
+        log.info("Running update: <{}>. Params: {}, {}", updateStatement, fieldValue, id);
+        db.runner.update(preparedUpdateQuery.replace("{$fieldName}", fieldName), fieldValue, id);
     }
 
     // constraint violation
-    public Long insert(T obj) throws SQLException {
-        final ResultSetHandler<Long> h = new ScalarHandler<>();
+    public BigInteger insert(T obj) throws SQLException {
+        final ResultSetHandler<BigInteger> h = new ScalarHandler<>();
         Object[] values = new Object[pojoGetters.size()];
         for (int i = 0; i < values.length; i++) {
             try {
@@ -92,33 +95,36 @@ public class GenericCUDService<T> {
                 throw new RuntimeException("Something went wrong with generated insert statement. ", e);
             }
         }
-
+        log.info("Running insert <{}>. Params: <{}>", preparedInsertQuery, values);
         return db.runner.insert(preparedInsertQuery, h, values);
     }
 
     // true if deleted anything, false otherwise
     public boolean delete(Long id) throws SQLException {
+        log.info("Running delete <{}>. Id: <{}>", preparedDeleteQuery, id);
         int i = db.runner.update(preparedDeleteQuery, id);
         return i == 1;
     }
 
-    private String generateInsertStringTemplate(Class<T> pojo, List<Map<String, Object>> mp, String fullTableName) {
+    private String generateInsertStringTemplate(Class<T> pojo, String fullTableName) {
         Method[] methods = pojo.getDeclaredMethods();
-        Arrays.sort(methods);
+        Arrays.sort(methods, Comparator.comparing(Method::getName));
         StringBuilder bldr = new StringBuilder();
-        bldr.append("INSERT INTO %s (");
-        int count = 0;
-        pojoGetters = new ArrayList<>();
+        bldr.append("INSERT INTO ").append(fullTableName).append(" (");
         for (Method m: methods) {
-            if (m.getReturnType().equals(Void.class) && m.getName().startsWith("get") && !m.getName().endsWith("_id")) {
+            if (!m.getReturnType().equals(Void.TYPE) && m.getName().startsWith("get") && !m.getName().endsWith("_id")) {
+                String assumedColumnName = transformToColumnName(m.getName());
+                if (!this.columnNames.contains(assumedColumnName.toUpperCase())) {
+                    throw new InvalidPojoException(String.format("%s column does not exist in target column list", assumedColumnName));
+                }
                 bldr.append(transformToColumnName(m.getName())).append(", ");
                 pojoGetters.add(m);
-                count++;
             }
         }
-        bldr.append(") (")
-            .append(Collections.nCopies(count - 1, "?, "))
-            .append("?)");
+        bldr.replace(bldr.length() - 2, bldr.length(), "") // remove trailing ', '
+            .append(") VALUES(")
+            .append(String.join(",", Collections.nCopies(pojoGetters.size(), "?")))
+            .append(")");
 
         return bldr.toString();
     }
@@ -126,6 +132,12 @@ public class GenericCUDService<T> {
     private String transformToColumnName(String methodName) {
         return CaseFormat.LOWER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE,
                 methodName.replaceFirst("^(get|is)", ""));
+    }
+}
+
+class InvalidPojoException extends RuntimeException {
+    public InvalidPojoException(String message) {
+        super(message);
     }
 }
 
