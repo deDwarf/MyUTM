@@ -21,7 +21,6 @@ public class GroupedScheduleEntry {
     private String classEndTime;
     private String classNumber;
     private String classroomName;
-    private String groupNumber;
     private Integer subgroup;
     private String teacherFirstName;
     private String teacherMiddleName;
@@ -32,10 +31,13 @@ public class GroupedScheduleEntry {
     private String subjectNameAbbreviated;
     private int teacherId;
     private int subjectId;
-    private int groupId;
 
     public void setGroupIdToEntryIdAndGroupNumber(String groupIdToEntryIdAndGroupNumber) {
         this.groupIdToEntryIdAndGroupNumber = gson.fromJson(groupIdToEntryIdAndGroupNumber, tt);
+    }
+
+    public List<EntryIdAndGroupIdAndGroupName> getGroupedInfo() {
+        return groupIdToEntryIdAndGroupNumber;
     }
 
     public String getClassType() {
@@ -84,14 +86,6 @@ public class GroupedScheduleEntry {
 
     public void setClassroomName(String classroomName) {
         this.classroomName = classroomName;
-    }
-
-    public String getGroupNumber() {
-        return groupNumber;
-    }
-
-    public void setGroupNumber(String groupNumber) {
-        this.groupNumber = groupNumber;
     }
 
     public Integer getSubgroup() {
@@ -174,14 +168,6 @@ public class GroupedScheduleEntry {
         this.subjectId = subjectId;
     }
 
-    public int getGroupId() {
-        return groupId;
-    }
-
-    public void setGroupId(int groupId) {
-        this.groupId = groupId;
-    }
-
     public String getClassNumber() {
         return classNumber;
     }
@@ -199,7 +185,6 @@ public class GroupedScheduleEntry {
                 ", classStartTime='" + classStartTime + '\'' +
                 ", classEndTime='" + classEndTime + '\'' +
                 ", classroomName='" + classroomName + '\'' +
-                ", groupNumber='" + groupNumber + '\'' +
                 ", subgroup=" + subgroup +
                 ", teacherFirstName='" + teacherFirstName + '\'' +
                 ", teacherMiddleName='" + teacherMiddleName + '\'' +
@@ -210,7 +195,6 @@ public class GroupedScheduleEntry {
                 ", subjectNameAbbreviated='" + subjectNameAbbreviated + '\'' +
                 ", teacherId=" + teacherId +
                 ", subjectId=" + subjectId +
-                ", groupId=" + groupId +
                 '}';
     }
 }
