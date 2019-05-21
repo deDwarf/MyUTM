@@ -23,6 +23,9 @@ public class ScheduleExporterTest {
         ScheduleExporter e = new ScheduleExporter();
         File f = e.exportStudentSchedule(Arrays.asList((long) 1, (long) 2));
         System.out.println(f.getAbsolutePath());
+        e = new ScheduleExporter();
+        f = e.exportStudentSchedule(Arrays.asList((long) 1, (long) 2));
+        System.out.println(f.getAbsolutePath());
     }
 
     @Test

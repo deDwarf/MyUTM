@@ -15,6 +15,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,10 +40,11 @@ public class ScheduleExporter implements IScheduleExporter {
     private static final Database db = AppContext.getInstance().getDB();
 
     @Override
-    public File exportStudentSchedule(final List<Long> ids) throws SQLException {
+    public File exportStudentSchedule(final List<Long> ids) throws SQLException, IOException {
         List<Group> groups = db.getGroups();
         this.validateGroups(ids, groups);
-        HSSFWorkbook wb = this.openTemplate(studentScheduleTemplatePath);
+        File fout = File.createTempFile("filled-groups-schedule-template-", ".xls");
+        HSSFWorkbook wb = this.openTemplate(studentScheduleTemplatePath, fout);
 
         Sheet sheet = wb.getSheet("Schedule");
         ClassSectionStyleFormatter styleFormatter = new ClassSectionStyleFormatter(wb);
@@ -52,15 +57,17 @@ public class ScheduleExporter implements IScheduleExporter {
         Map<Long, Integer> map = this.createPayloadColumns(ids, wb, sheet);
         this.initializeColumnHeadersForGroups(map, groups, sheet);
         this.populatePayload(schedule, ids, sheet, styleFormatter, textFormatter);
+        this.saveAsFileAndClose(wb, fout);
 
-        return this.saveAsFileAndClose(wb, "filled-schedule-template-");
+        return fout;
     }
 
     @Override
-    public File exportTeacherSchedule(List<Long> ids) throws SQLException  {
+    public File exportTeacherSchedule(List<Long> ids) throws SQLException, IOException {
         List<Teacher> teachers = db.getTeachers();
         // TODO validation
-        HSSFWorkbook wb = this.openTemplate(teacherScheduleTemplatePath);
+        File fout = File.createTempFile("filled-teachers-schedule-template-", ".xls");
+        HSSFWorkbook wb = this.openTemplate(teacherScheduleTemplatePath, fout);
 
         Sheet sheet = wb.getSheet("Schedule");
         ClassSectionStyleFormatter styleFormatter = new ClassSectionStyleFormatter(wb);
@@ -82,29 +89,28 @@ public class ScheduleExporter implements IScheduleExporter {
         Map<Long, Integer> map = this.createPayloadColumns(ids, wb, sheet);
         this.initializeColumnHeadersForTeachers(map, teachers, sheet);
         this.populatePayloadForTeachers(schedule, ids, sheet, styleFormatter, textFormatter);
+        this.saveAsFileAndClose(wb, fout);
 
-        return saveAsFileAndClose(wb, "filled-teacher-schedule-template-");
+        return fout;
     }
 
-    private HSSFWorkbook openTemplate(String templatePath) {
+    private HSSFWorkbook openTemplate(String templatePath, File target) {
         try {
             java.net.URL url = IOUtils.resourceToURL(templatePath, ScheduleExporter.class.getClassLoader());
-            return new HSSFWorkbook(new FileInputStream(new File(url.toURI())));
+            Files.copy(Paths.get(url.toURI()), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            return new HSSFWorkbook(new FileInputStream(new File(target.toURI())));
         } catch (URISyntaxException | IOException e) {
-            throw new RuntimeException("Error while schedule export: cannot read from template file", e);
+            throw new RuntimeException("Error occurred while exporting schedule: cannot read from template file", e);
         }
     }
 
-    private File saveAsFileAndClose(Workbook wb, String prefix){
+    private void saveAsFileAndClose(Workbook wb, File target){
         try {
-            File f = File.createTempFile(prefix, ".xls");
-            FileOutputStream fout = new FileOutputStream(f);
-
+            FileOutputStream fout = new FileOutputStream(target);
             wb.write(fout);
             fout.flush();
             fout.close();
             wb.close();
-            return f;
         } catch (IOException e) {
             throw new RuntimeException("Error while schedule export: couldn`t save file properly");
         }
@@ -172,7 +178,8 @@ public class ScheduleExporter implements IScheduleExporter {
                                 .filter(e -> e.getGroups().containsKey(groupIds.get(closureJ)) && e.getWeekParity() == null)
                                 .collect(Collectors.toList());
                         ClassSectionType nextClassSectionType = ClassSectionType.getCellType(schForTimeAndGroup1);
-                        if (classSectionType == ClassSectionType.EMPTY || nextClassSectionType == ClassSectionType.EMPTY
+                        if (classSectionType == ClassSectionType.EMPTY
+                                || nextClassSectionType == ClassSectionType.EMPTY
                                 || nextClassSectionType != classSectionType
                                 || !isSameDayTeacherAndSubject(schForTimeAndGroup.get(0), schForTimeAndGroup1.get(0))) {
                             break;

@@ -11,10 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ColoredCellStyleManager extends CellStyleManager implements ICellStyleManager {
-    private static Map<String, ICellStyleManager> inst;
-    private static boolean initialized = false;
-
-    private ColoredCellStyleManager(Workbook wb, HSSFColor color) {
+    public ColoredCellStyleManager(Workbook wb, HSSFColor color) {
         super(wb);
         CellStyle[] cs = new CellStyle[7];
         for (int i = 0; i < 7; i++) {
@@ -40,25 +37,5 @@ public class ColoredCellStyleManager extends CellStyleManager implements ICellSt
         middleCellBoldDashedBottomBorder = cs[4];
         middleCellBold = cs[5];
         topCellBold = cs[6];
-    }
-
-    public static ICellStyleManager getInstance(HSSFWorkbook wb, Long subjectTypeId) {
-       if (!initialized) {
-           HSSFColor yellow = wb.getCustomPalette().findSimilarColor((byte)253 , (byte)233, (byte)217);
-           HSSFColor grey = wb.getCustomPalette().getColor(IndexedColors.GREY_25_PERCENT.getIndex());
-           inst = new HashMap<>();
-           inst.put("yellow", new ColoredCellStyleManager(wb, yellow));
-           inst.put("grey", new ColoredCellStyleManager(wb, grey));
-           inst.put("default", new CellStyleManager(wb));
-           initialized = true;
-       }
-
-       if (subjectTypeId == 3) {
-           return inst.get("yellow");
-       } else if (subjectTypeId == 2 || subjectTypeId == 1) {
-           return inst.get("grey");
-       } else {
-           return inst.get("default");
-       }
     }
 }

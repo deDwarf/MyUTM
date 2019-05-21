@@ -109,7 +109,7 @@ public class ClassSectionTextFormatter {
         @Override
         public void onParityBoth(GroupedRegularScheduleEntry odd, GroupedRegularScheduleEntry even, Cell[] cells) {
             onParityEvenOnly(even, cells);
-            onParityEvenOnly(odd, cells);
+            onParityOddOnly(odd, cells);
         }
 
         @Override
