@@ -103,9 +103,19 @@ public class SimpleDataAccessAPI extends CommonResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("lesson-numbers/free")
     public Response getAvailableLessonNumbers(@QueryParam("teacherUsername") String teacherUsername,
-                                             @QueryParam("groupId") Long groupId,
-                                             @QueryParam("date") String date) throws SQLException {
+                                              @QueryParam("groupId") Long groupId,
+                                              @QueryParam("groupNumber") String groupNumber,
+                                              @QueryParam("date") String date) throws SQLException {
+        if (!validateNotEmpty(teacherUsername, date) || groupId == null && groupNumber == null) {
+            return Response.status(400)
+                    .entity("{msg: \"Teacher username, date and either group number or id must not be empty\"}")
+                    .build();
+        }
         Teacher t = db.getTeacher(teacherUsername);
+        if (groupId == null) {
+            Group g = db.getGroupByName(groupNumber);
+            groupId = g.getGroupId();
+        }
         List<ClassesTimeSchedule> ct = db.getFreeTimeForDateAndTeacherAndGroup(parseDate(date), groupId, t.getTeacherId());
 
         return Response.ok(gson.toJson(ct)).build();

@@ -33,4 +33,14 @@ public abstract class CommonResource {
         return f.format(date);
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    protected boolean validateNotEmpty(Object... params) {
+        for (Object p: params) {
+            if (p == null || (p instanceof String && ((String)p).trim().equals(""))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
  }

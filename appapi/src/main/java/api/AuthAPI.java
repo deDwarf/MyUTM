@@ -213,13 +213,4 @@ public class AuthAPI extends CommonResource {
         return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
     }
 
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean validateNotEmpty(String... params) {
-        for (String p: params) {
-            if (p == null || p.trim().equals("")) {
-                return false;
-            }
-        }
-        return true;
-    }
 }
