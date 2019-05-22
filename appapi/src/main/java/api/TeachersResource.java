@@ -38,11 +38,12 @@ public class TeachersResource extends SimpleCUDResource<Teacher> {
         return super.add(json);
     }
 
-
     @Override
     @PUT
-    public Response update(String params) {
-        return super.update(params);
+    public Response update(@FormParam("pk") Long id,
+                           @FormParam("name") String fieldName,
+                           @FormParam("value") String fieldValue) {
+        return super.update(id, fieldName, fieldValue);
     }
 
     @Override

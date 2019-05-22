@@ -4,6 +4,7 @@ import api.common.CommonResource;
 import core.Roles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import pojos.ClassesTimeSchedule;
 import pojos.Group;
 import pojos.Student;
 import pojos.Teacher;
@@ -16,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.sql.SQLException;
+import java.util.List;
 
 
 /**
@@ -95,5 +97,17 @@ public class SimpleDataAccessAPI extends CommonResource {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Unrecognized role").build();
         }
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("lesson-numbers/free")
+    public Response getAvailableLessonNumbers(@QueryParam("teacherUsername") String teacherUsername,
+                                             @QueryParam("groupId") Long groupId,
+                                             @QueryParam("date") String date) throws SQLException {
+        Teacher t = db.getTeacher(teacherUsername);
+        List<ClassesTimeSchedule> ct = db.getFreeTimeForDateAndTeacherAndGroup(parseDate(date), groupId, t.getTeacherId());
+
+        return Response.ok(gson.toJson(ct)).build();
     }
 }

@@ -2,21 +2,24 @@ package api;
 
 import api.common.CommonResource;
 import com.google.gson.reflect.TypeToken;
+import core.AppContext;
 import core.Roles;
 import exporter.ScheduleExporter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pojos.*;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
-import javax.ws.rs.Path;
 import javax.ws.rs.core.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.file.*;
+import java.nio.file.Files;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -25,7 +28,7 @@ import java.util.zip.ZipOutputStream;
  */
 @Path("/schedule")
 public class ScheduleResource extends CommonResource {
-
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     private static final Type intListType = new TypeToken<List<Long>>(){}.getType();
 
     @POST
@@ -70,9 +73,15 @@ public class ScheduleResource extends CommonResource {
     @POST
     @RolesAllowed({Roles.ADMIN, Roles.TEACHER})
     @Path("/dated")
-    public Response registerDatedClass() {
-        // groups, teacher, date, time, classroom, subject, subject_type
-        return RESPONSE_NOT_IMPLEMENTED;
+    public Response registerDatedClass(String json) throws SQLException {
+        // groups, teacher, date, class_number, classroom_id, subject_id, subject_type_id
+        ScheduleEntry e = gson.fromJson(json, ScheduleEntry.class);
+        if (e.getTeacherId() == 0 && e.getTeacherUsername() != null) {
+            Teacher t = db.getTeacher(e.getTeacherUsername());
+            e.setTeacherId(Math.toIntExact(t.getTeacherId()));
+        }
+        Long id = db.registerDatedClass(e);
+        return Response.ok(id).build();
     }
 
     /**
@@ -150,53 +159,114 @@ public class ScheduleResource extends CommonResource {
                     .entity("Unrecognized role").build();
         }
     }
+
     @GET
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("export/")
     public Response getScheduleExportGroupedByGroups(String input) throws SQLException, IOException {
         ExportRequestPojo req = gson.fromJson(input, ExportRequestPojo.class);
-        if (req == null) {
-            req = new ExportRequestPojo(Arrays.asList(Collections.singletonList((long)1)), null);
-        }
-        ScheduleExporter e = new ScheduleExporter();
-        try {
-            java.nio.file.Path finalFile;
-            List<File> outFiles = new LinkedList<>();
-            // generate files
-            if (req.getStudentIds() != null) {
-                for (List<Long> ids : req.getStudentIds()) {
-                    File export = e.exportStudentSchedule(ids);
-                    outFiles.add(export);
-                    delayedDeleteFile(export, 2000 * 60);
-                }
-            }
-            if (req.getTeacherIds() != null) {
-                for (List<Long> ids : req.getTeacherIds()) {
-                    File export = e.exportTeacherSchedule(ids);
-                    outFiles.add(export);
-                    delayedDeleteFile(export, 2000 * 60);
-                }
-            }
-            if (outFiles.size() == 1) {
-                finalFile = outFiles.get(0).toPath();
-            } else {
-                finalFile = this.compressAsZip(outFiles);
-            }
+        java.nio.file.Path finalFile = this.exportSchedule(req);
+        StreamingOutput so = outputStream -> {
+            outputStream.write(Files.readAllBytes(finalFile));
+            outputStream.flush();
+        };
+        log.info("Sending final file.. " + finalFile.toString());
+        return Response
+                .ok(so, MediaType.APPLICATION_OCTET_STREAM)
+                .header("Content-Disposition", "attachment; filename=\"" + finalFile.getFileName().toString() + "\"")
+                // .header("filename", finalFile.getFileName().toString())
+                .build();
+    }
 
-            // prepare response
-            StreamingOutput so = outputStream -> {
-                outputStream.write(Files.readAllBytes(finalFile));
-                outputStream.flush();
-            };
-            delayedDeleteFile(new File(finalFile.toUri()), 2000 * 60);
-            return Response
-                    .ok(so, MediaType.APPLICATION_OCTET_STREAM)
-                    .header("content-disposition", "attachment; filename = " + finalFile.getFileName().toString())
-                    .build();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+    @SuppressWarnings("Duplicates")
+    //@GET
+    //@Produces(MediaType.APPLICATION_OCTET_STREAM)
+    //@Path("export/")
+    public Response getScheduleExportGroupedByGroups2(@FormParam("groupIds") String groupIds,
+                                                      @FormParam("teacherIds") String teacherIds)
+            throws SQLException, IOException {
+        List<Long> pteacherIds = Arrays.stream(teacherIds.split(",")).map(Long::parseLong).collect(Collectors.toList());
+        List<Long> pgroupIds = Arrays.stream(groupIds.split(",")).map(Long::parseLong).collect(Collectors.toList());
+        java.nio.file.Path finalFile = this.exportSchedule(pteacherIds, pgroupIds);
+        StreamingOutput so = outputStream -> {
+            outputStream.write(Files.readAllBytes(finalFile));
+            outputStream.flush();
+        };
+        log.info("Sending final file.. " + finalFile.toString());
+        return Response
+                .ok(so, MediaType.APPLICATION_OCTET_STREAM)
+                .header("Content-Disposition", "attachment; filename=\"" + finalFile.getFileName().toString() + "\"")
+                // .header("filename", finalFile.getFileName().toString())
+                .build();
+    }
+
+    private java.nio.file.Path exportSchedule(ExportRequestPojo req) throws IOException, SQLException {
+        ScheduleExporter e = new ScheduleExporter();
+        java.nio.file.Path finalFile;
+        List<File> outFiles = new LinkedList<>();
+        // generate files
+        if (req.getStudentIds() != null) {
+            for (List<Long> ids : req.getStudentIds()) {
+                File export = e.exportStudentSchedule(ids);
+                outFiles.add(export);
+                delayedDeleteFile(export, 2000 * 60);
+            }
         }
-        return Response.status(500).build();
+        if (req.getTeacherIds() != null) {
+            for (List<Long> ids : req.getTeacherIds()) {
+                File export = e.exportTeacherSchedule(ids);
+                outFiles.add(export);
+                delayedDeleteFile(export, 2000 * 60);
+            }
+        }
+
+        if (outFiles.size() == 1) {
+            finalFile = outFiles.get(0).toPath();
+        } else {
+            finalFile = this.compressAsZip(outFiles);
+            delayedDeleteFile(new File(finalFile.toUri()), 2000 * 60);
+        }
+        return finalFile;
+    }
+
+    private java.nio.file.Path exportSchedule(List<Long> teacherIds, List<Long> groupIds) throws IOException, SQLException {
+        ScheduleExporter e = new ScheduleExporter();
+        java.nio.file.Path finalFile;
+        List<File> outFiles = new LinkedList<>();
+        // generate files
+        if (groupIds != null) {
+            File export = e.exportStudentSchedule(groupIds);
+            outFiles.add(export);
+            delayedDeleteFile(export, 2000 * 60);
+        }
+        if (teacherIds != null) {
+            File export = e.exportTeacherSchedule(teacherIds);
+            outFiles.add(export);
+            delayedDeleteFile(export, 2000 * 60);
+        }
+
+        if (outFiles.size() == 1) {
+            finalFile = outFiles.get(0).toPath();
+        } else {
+            finalFile = this.compressAsZip(outFiles);
+            delayedDeleteFile(new File(finalFile.toUri()), 2000 * 60);
+        }
+        return finalFile;
+    }
+
+    private java.nio.file.Path compressAsZip(List<File> files) throws IOException {
+        File zip = File.createTempFile("schedule-export-", ".zip", AppContext.getInstance().TMP_DIR);
+        ZipOutputStream zou = new ZipOutputStream(new FileOutputStream(zip));
+        for (File file : files) {
+            zou.putNextEntry(new ZipEntry(file.getName()));
+            zou.write(Files.readAllBytes(file.toPath()));
+            zou.closeEntry();
+        }
+        zou.flush();
+        zou.finish();
+        zou.close();
+
+        return zip.toPath();
     }
 
     private Timer timer = new Timer();
@@ -208,21 +278,6 @@ public class ScheduleResource extends CommonResource {
                 if (!deleted) file.deleteOnExit();
             }
         }, delay);
-    }
-
-    private java.nio.file.Path compressAsZip(List<File> files) throws IOException {
-        java.nio.file.Path zip = Files.createTempFile("schedule-export-", ".zip");
-        ZipOutputStream zou = new ZipOutputStream(new FileOutputStream(new File(zip.toUri())));
-        for (File file : files) {
-            zou.putNextEntry(new ZipEntry(file.getName()));
-            zou.write(Files.readAllBytes(file.toPath()));
-            zou.closeEntry();
-        }
-        zou.flush();
-        zou.finish();
-        zou.close();
-
-        return zip;
     }
 
     private class ExportRequestPojo {

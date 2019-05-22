@@ -28,6 +28,7 @@ public class Database {
     protected DataSource src;
     protected QueryRunner runner;
 
+    private final String getFreeTime;
     private final String getGroupedScheduleSQL;
     private final String getFreeClassrooms;
     private final String getScheduleForDayTemplateSQL;
@@ -41,9 +42,11 @@ public class Database {
         this.getStudentByEmail = readSQLFromResources(
                 "select_student_by_email.sql");
         this.getStudentById = readSQLFromResources(
-                "select_student_by_email.sql");
+                "select_student_by_id.sql");
         this.getFreeClassrooms = readSQLFromResources(
                 "select_free_classrooms_for_time.sql");
+        this.getFreeTime = readSQLFromResources(
+                "select_free_time_for_teacher_group_date.sql");
         this.getGroupedRegularSchedule = readSQLFromResources(
                 "select_grouped_regular_schedule.sql");
         this.getGroupedScheduleSQL = readSQLFromResources(
@@ -255,11 +258,27 @@ public class Database {
                 " order by group_number, week_day, class_number, week_parity", h, scheduleEntryId);
     }
 
+
+    public Long registerDatedClass(ScheduleEntry e) throws SQLException {
+        final ResultSetHandler<BigInteger> h = new ScalarHandler<>();
+        return runner.insert("INSERT INTO fcimapp.schedule_dated_classes " +
+                "(group_id, date_key, class_number, classroom_id, main_teacher_id, subject_id, subject_type) " +
+                "VALUES(?, ?, ?, ?, ?, ?, ?)", h, e.getGroupId(), e.getDate(), e.getClassNumber(), e.getClassroomId(),
+                e.getTeacherId(), e.getSubjectId(), e.getSubjectTypeId()).longValue();
+    }
+
     // --- functions
 
     public List<Classroom> getFreeClassroomsForDateAndTime(java.util.Date date, Long classNumber) throws SQLException {
         final BeanListHandler<Classroom> h = new BeanListHandler<>(Classroom.class, rowProcessor);
         return runner.query(getFreeClassrooms, h, formatter.format(date), classNumber);
+    }
+
+    public List<ClassesTimeSchedule> getFreeTimeForDateAndTeacherAndGroup(java.util.Date date,
+                                                                Long groupId,
+                                                                Long teacherId) throws SQLException {
+        final BeanListHandler<ClassesTimeSchedule> h = new BeanListHandler<>(ClassesTimeSchedule.class, rowProcessor);
+        return runner.query(getFreeTime, h, formatter.format(date), groupId, teacherId);
     }
 
     public void getFreeTimeForGroupAndDay(long groupId, Date date) {}

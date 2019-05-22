@@ -14,7 +14,7 @@ public class ClassSectionTypeResolver {
         return resolve(sch, STUB_HANDLER, null);
     }
 
-    public static ClassSectionType resolve(List<GroupedRegularScheduleEntry> sch, ClassSectionTypeHandler h, Cell[] cells) {
+    public static ClassSectionType resolve(List<GroupedRegularScheduleEntry> sch, AbstractClassSectionTypeHandler h, Cell[] cells) {
         if (sch == null || sch.isEmpty()) {
             h.onEmpty(cells);
             return ClassSectionType.EMPTY;
@@ -57,7 +57,7 @@ public class ClassSectionTypeResolver {
         // TODO subgroups
     }
 
-    private static class StubHandler extends ClassSectionTypeHandler {
+    private static class StubHandler extends AbstractClassSectionTypeHandler {
 
         @Override
         public void onEmpty(Cell[] cells) { }

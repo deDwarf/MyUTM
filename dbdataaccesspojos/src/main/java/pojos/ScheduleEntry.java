@@ -23,6 +23,33 @@ public class ScheduleEntry {
     private int teacherId;
     private int subjectId;
     private int groupId;
+    private int classroomId;
+    private int subjectTypeId;
+    private String teacherUsername;
+
+    public String getTeacherUsername() {
+        return teacherUsername;
+    }
+
+    public void setTeacherUsername(String teacherUsername) {
+        this.teacherUsername = teacherUsername;
+    }
+
+    public int getSubjectTypeId() {
+        return subjectTypeId;
+    }
+
+    public void setSubjectTypeId(int subjectTypeId) {
+        this.subjectTypeId = subjectTypeId;
+    }
+
+    public int getClassroomId() {
+        return classroomId;
+    }
+
+    public void setClassroomId(int classroomId) {
+        this.classroomId = classroomId;
+    }
 
     public long getScheduleEntryId() {
         return scheduleEntryId;

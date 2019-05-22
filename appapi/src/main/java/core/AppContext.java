@@ -3,6 +3,7 @@ package core;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +13,7 @@ import java.util.Properties;
 public class AppContext {
     private static AppContext inst = new AppContext();
     private Database db;
+    public final File TMP_DIR = new File(System.getProperty("java.io.tmpdir"));
     public final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()
             .setDateFormat("yyyy-MM-dd")

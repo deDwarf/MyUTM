@@ -1,18 +1,15 @@
 package exporter.formatter;
 
-import com.sun.xml.internal.ws.util.StreamUtils;
-import exporter.ClassSectionTypeHandler;
+import exporter.AbstractClassSectionTypeHandler;
 import exporter.ClassSectionTypeResolver;
 import exporter.ScheduleExporter;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import pojos.GroupedRegularScheduleEntry;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ClassSectionStyleFormatter {
     private HSSFWorkbook wb;
@@ -31,7 +28,7 @@ public class ClassSectionStyleFormatter {
         ClassSectionTypeResolver.resolve(re, new MyClassSectionTypeHandler(wb), cells);
     }
 
-    private class MyClassSectionTypeHandler extends ClassSectionTypeHandler {
+    private class MyClassSectionTypeHandler extends AbstractClassSectionTypeHandler {
         private HSSFWorkbook wb;
         private ICellStyleManager syellow;
         private ICellStyleManager sgrey;

@@ -1,4 +1,5 @@
 package exporter;
+
 import com.google.common.base.MoreObjects;
 import core.AppContext;
 import core.Database;
@@ -6,24 +7,12 @@ import exporter.formatter.ClassSectionStyleFormatter;
 import exporter.formatter.ClassSectionTextFormatter;
 import exporter.utils.POIUtils;
 import org.apache.commons.collections4.IteratorUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.*;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.CopyOption;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.sql.SQLException;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.apache.commons.io.IOUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellAddress;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.slf4j.Logger;
@@ -32,18 +21,36 @@ import pojos.Group;
 import pojos.GroupedRegularScheduleEntry;
 import pojos.Teacher;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.stream.Collectors;
+
 // TODO refactor: code duplicates
 public class ScheduleExporter implements IScheduleExporter {
     private static final String studentScheduleTemplatePath = "regular_schedule_template_groups.xls";
     private static final String teacherScheduleTemplatePath = "regular_schedule_template_teachers.xls";
     private static final Logger log = LoggerFactory.getLogger(ScheduleExporter.class);
     private static final Database db = AppContext.getInstance().getDB();
+    private static final File userDir = AppContext.getInstance().TMP_DIR;
+    private static final SimpleDateFormat fdf = new SimpleDateFormat("yy-MM-dd.HH-mm-ss-SSS");
+
 
     @Override
     public File exportStudentSchedule(final List<Long> ids) throws SQLException, IOException {
         List<Group> groups = db.getGroups();
         this.validateGroups(ids, groups);
-        File fout = File.createTempFile("filled-groups-schedule-template-", ".xls");
+        //File fout = File.createTempFile("filled-groups-schedule-template-", ".xls", userDir);
+        File fout = new File(userDir, "exported-group-schedule." + fdf.format(new Date()) + ".xls");
+
         HSSFWorkbook wb = this.openTemplate(studentScheduleTemplatePath, fout);
 
         Sheet sheet = wb.getSheet("Schedule");
@@ -66,7 +73,7 @@ public class ScheduleExporter implements IScheduleExporter {
     public File exportTeacherSchedule(List<Long> ids) throws SQLException, IOException {
         List<Teacher> teachers = db.getTeachers();
         // TODO validation
-        File fout = File.createTempFile("filled-teachers-schedule-template-", ".xls");
+        File fout = File.createTempFile("filled-teachers-schedule-template-", ".xls", userDir);
         HSSFWorkbook wb = this.openTemplate(teacherScheduleTemplatePath, fout);
 
         Sheet sheet = wb.getSheet("Schedule");

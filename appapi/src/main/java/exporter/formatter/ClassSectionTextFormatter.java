@@ -1,12 +1,12 @@
 package exporter.formatter;
 
 
-import exporter.ClassSectionType;
-import exporter.ClassSectionTypeHandler;
+import exporter.AbstractClassSectionTypeHandler;
 import exporter.ClassSectionTypeResolver;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.*;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.ss.usermodel.Cell;
 import pojos.GroupedRegularScheduleEntry;
 
@@ -15,7 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ClassSectionTextFormatter {
-    private static Map<Integer, ClassSectionTypeHandler> hs;
+    private static Map<Integer, AbstractClassSectionTypeHandler> hs;
     private Function<GroupedRegularScheduleEntry, String> f;
 
     public ClassSectionTextFormatter(Function<GroupedRegularScheduleEntry, String> thirdCellContentExtractor) {
@@ -27,7 +27,7 @@ public class ClassSectionTextFormatter {
         assert cells != null;
         assert cells.length == 6;
 
-        ClassSectionTypeHandler h = hs.get(maxLength);
+        AbstractClassSectionTypeHandler h = hs.get(maxLength);
         if (Objects.isNull(h)) {
             hs.put(maxLength, new TextClassSectionTypeHandler(maxLength));
             h = hs.get(maxLength);
@@ -80,7 +80,7 @@ public class ClassSectionTextFormatter {
         return res;
     }
 
-    private class TextClassSectionTypeHandler extends ClassSectionTypeHandler {
+    private class TextClassSectionTypeHandler extends AbstractClassSectionTypeHandler {
         private int maxCellLength;
 
         public TextClassSectionTypeHandler(int maxCellLength) {
