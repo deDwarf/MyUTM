@@ -80,6 +80,10 @@ public class ScheduleResource extends CommonResource {
             Teacher t = db.getTeacher(e.getTeacherUsername());
             e.setTeacherId(Math.toIntExact(t.getTeacherId()));
         }
+        if (e.getGroupId() == 0 && e.getGroupNumber() != null) {
+            Group t = db.getGroupByName(e.getGroupNumber());
+            e.setGroupId(Math.toIntExact(t.getGroupId()));
+        }
         Long id = db.registerDatedClass(e);
         return Response.ok(id).build();
     }
