@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 // TODO refactor: code duplicates
+@SuppressWarnings("Duplicates")
 public class ScheduleExporter implements IScheduleExporter {
     private static final String studentScheduleTemplatePath = "regular_schedule_template_groups.xls";
     private static final String teacherScheduleTemplatePath = "regular_schedule_template_teachers.xls";
@@ -161,7 +162,7 @@ public class ScheduleExporter implements IScheduleExporter {
     private void populatePayload(List<GroupedRegularScheduleEntry> sch, List<Long> groupIds, Sheet sh,
                                  ClassSectionStyleFormatter sFormatter, ClassSectionTextFormatter tFormatter) {
         // very very deep loop
-        for (int day = 0; day < TemplateConstant.NUM_OF_DAYS.val; day++) {
+        for (int day = 1; day <= TemplateConstant.NUM_OF_DAYS.val; day++) {
             final int closureDay = day;
             for (int classNumber = 1; classNumber <= TemplateConstant.NUM_OF_CLASSES.val; classNumber++) {
                 log.info("Processing day <{}>, class number <{}>", day, classNumber);
@@ -227,7 +228,7 @@ public class ScheduleExporter implements IScheduleExporter {
     private void populatePayloadForTeachers(List<GroupedRegularScheduleEntry> sch, List<Long> teacherIds, Sheet sh,
                                             ClassSectionStyleFormatter sFormatter, ClassSectionTextFormatter tFormatter) {
         // very very deep loop
-        for (int day = 0; day < TemplateConstant.NUM_OF_DAYS.val; day++) {
+        for (int day = 1; day <= TemplateConstant.NUM_OF_DAYS.val; day++) {
             final int closureDay = day;
             for (int classNumber = 1; classNumber <= TemplateConstant.NUM_OF_CLASSES.val; classNumber++) {
                 log.info("Processing day <{}>, class number <{}>", day, classNumber);
@@ -313,7 +314,7 @@ public class ScheduleExporter implements IScheduleExporter {
          */
         public static CellAddress getStartCellAddr(int day, int classNumber) {
             int dayHeight = (NUM_OF_CLASSES.val * ONE_CLASS_SECTION_CELL_HEIGHT.val + WEEKDAY_DELIMITER_SIZE.val);
-            int rowNum = PAYLOAD_START_ROW.val + dayHeight * day + (classNumber - 1) * ONE_CLASS_SECTION_CELL_HEIGHT.val;
+            int rowNum = PAYLOAD_START_ROW.val + dayHeight * (day - 1) + (classNumber - 1) * ONE_CLASS_SECTION_CELL_HEIGHT.val;
             return new CellAddress(rowNum, PAYLOAD_START_COL.val);
         }
     }
