@@ -1,6 +1,7 @@
 package api;
 
 import api.common.CommonResource;
+import api.common.Message;
 import com.google.gson.reflect.TypeToken;
 import core.AppContext;
 import core.Roles;
@@ -71,6 +72,7 @@ public class ScheduleResource extends CommonResource {
     }
 
     @POST
+    @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed({Roles.ADMIN, Roles.TEACHER})
     @Path("/dated")
     public Response registerDatedClass(String json) throws SQLException {
@@ -79,18 +81,14 @@ public class ScheduleResource extends CommonResource {
         try {
             scheduleEntry = gson.fromJson(json, ScheduleEntry.class);
         } catch (Exception e) {
-            return Response.status(400).entity("Invalid request request: <" + json + ">").build();
+            return Response.status(400).entity("Invalid request: <" + json + ">").build();
         }
         if (scheduleEntry.getTeacherId() == 0 && scheduleEntry.getTeacherUsername() != null) {
             Teacher t = db.getTeacher(scheduleEntry.getTeacherUsername());
             scheduleEntry.setTeacherId(Math.toIntExact(t.getTeacherId()));
         }
-        if (scheduleEntry.getGroupId() == 0 && scheduleEntry.getGroupNumber() != null) {
-            Group t = db.getGroupByName(scheduleEntry.getGroupNumber());
-            scheduleEntry.setGroupId(Math.toIntExact(t.getGroupId()));
-        }
         Long id = db.registerDatedClass(scheduleEntry);
-        return Response.ok(id).build();
+        return Response.ok(gson.toJson(new Message(String.valueOf(id)))).build();
     }
 
     /**

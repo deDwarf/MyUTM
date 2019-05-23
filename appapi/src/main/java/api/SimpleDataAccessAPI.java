@@ -1,6 +1,7 @@
 package api;
 
 import api.common.CommonResource;
+import api.common.Message;
 import core.Roles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,14 +109,10 @@ public class SimpleDataAccessAPI extends CommonResource {
                                               @QueryParam("date") String date) throws SQLException {
         if (!validateNotEmpty(teacherUsername, date) || groupId == null && groupNumber == null) {
             return Response.status(400)
-                    .entity("{msg: \"Teacher username, date and either group number or id must not be empty\"}")
+                    .entity(new Message("Teacher username, date and either group number or id must not be empty"))
                     .build();
         }
         Teacher t = db.getTeacher(teacherUsername);
-        if (groupId == null) {
-            Group g = db.getGroupByName(groupNumber);
-            groupId = g.getGroupId();
-        }
         List<ClassesTimeSchedule> ct = db.getFreeTimeForDateAndTeacherAndGroup(parseDate(date), groupId, t.getTeacherId());
 
         return Response.ok(gson.toJson(ct)).build();
