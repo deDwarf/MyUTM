@@ -20,7 +20,7 @@ left join fcimapp.schedule_cancelled_classes scc
 where
 	(sch.week_parity is null or c.week_parity = sch.week_parity)
 	and (sch.group_id = ? or sch.teacher_id = ?)
-	and c.date_key = ?
+	and c.date_key between ? and ?
 group by subject_id, subject_type_id, teacher_id, classroom_id
 			 , c.date_key, class_number, class_type
 union all
@@ -40,6 +40,6 @@ select
 from fcimapp.vw_denormalized_dated_schedule schd
 where
 	(schd.group_id = ? or schd.teacher_id = ?)
-	and schd.date_key = ?
+	and schd.date_key between ? and ?
 group by subject_id, subject_type_id, teacher_id, classroom_id
 			 , schd.date_key, class_number, class_type

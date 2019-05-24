@@ -107,8 +107,20 @@ public class ScheduleResource extends CommonResource {
             @PathParam("group") Long groupId,
             @PathParam("date") String date,
             @Context SecurityContext sec) throws SQLException {
-        Date parsedDate = parseDate(date);
-        List<ScheduleEntry> schedule = db.getGroupScheduleForDay(parsedDate, groupId);
+        return getStudentScheduleForDay(groupId, date, date, sec);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("groups/{group}/{from-date}/{till-date}")
+    public Response getStudentScheduleForDay(
+            @PathParam("group") Long groupId,
+            @PathParam("from-date") String fromDate,
+            @PathParam("till-date") String tillDate,
+            @Context SecurityContext sec) throws SQLException {
+        Date parsedFromDate = parseDate(fromDate);
+        Date parsedTillDate = parseDate(tillDate);
+        List<ScheduleEntry> schedule = db.getGroupScheduleForDay(parsedFromDate, parsedTillDate, groupId);
 
         return Response.ok(gson.toJson(schedule)).build();
     }
@@ -136,8 +148,20 @@ public class ScheduleResource extends CommonResource {
             @PathParam("teacherId") Long teacherId,
             @PathParam("date") String date,
             @Context SecurityContext sec) throws SQLException {
-        Date parsedDate = parseDate(date);
-        List<GroupedScheduleEntry> schedule = db.getTeacherGroupedScheduleForDay(parsedDate, teacherId);
+        return getTeacherScheduleForDay(teacherId, date, date, sec);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("teachers/{teacherId}/{from-date}/{till-date}")
+    public Response getTeacherScheduleForDay(
+            @PathParam("teacherId") Long teacherId,
+            @PathParam("from-date") String fromDate,
+            @PathParam("till-date") String tillDate,
+            @Context SecurityContext sec) throws SQLException {
+        Date parsedFromDate = parseDate(fromDate);
+        Date parsedTillDate = parseDate(tillDate);
+        List<GroupedScheduleEntry> schedule = db.getTeacherGroupedScheduleForDay(parsedFromDate, parsedTillDate, teacherId);
 
         return Response.ok(gson.toJson(schedule)).build();
     }
@@ -155,12 +179,22 @@ public class ScheduleResource extends CommonResource {
     @RolesAllowed({Roles.STUDENT, Roles.TEACHER})
     public Response getMySchedule(@Context SecurityContext sec,
                                   @PathParam("from-date") String fromDate) throws SQLException {
+        return getMySchedule(sec, fromDate, fromDate);
+    }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("my/{from-date}/{till-date}")
+    @RolesAllowed({Roles.STUDENT, Roles.TEACHER})
+    public Response getMySchedule(@Context SecurityContext sec,
+                                  @PathParam("from-date") String fromDate,
+                                  @PathParam("till-date") String tillDate) throws SQLException {
         if (sec.isUserInRole(Roles.STUDENT)) {
             Student st = db.getStudent(sec.getUserPrincipal().getName());
-            return getStudentScheduleForDay(st.getGroupId(), fromDate, sec);
+            return getStudentScheduleForDay(st.getGroupId(), fromDate, tillDate, sec);
         } else if (sec.isUserInRole(Roles.TEACHER)) {
             Teacher t = db.getTeacher(sec.getUserPrincipal().getName());
-            return getTeacherScheduleForDay(t.getTeacherId(), fromDate, sec);
+            return getTeacherScheduleForDay(t.getTeacherId(), fromDate, tillDate, sec);
         } else {
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("Unrecognized role").build();
@@ -243,30 +277,5 @@ public class ScheduleResource extends CommonResource {
         }, delay);
     }
 
-    private class ExportRequestPojo {
-        private List<List<Long>> teacherIds;
-        private List<List<Long>> studentIds;
-
-        public ExportRequestPojo(List<List<Long>> teacherIds, List<List<Long>> studentIds) {
-            this.teacherIds = teacherIds;
-            this.studentIds = studentIds;
-        }
-
-        public List<List<Long>> getTeacherIds() {
-            return teacherIds;
-        }
-
-        public void setTeacherIds(List<List<Long>> teacherIds) {
-            this.teacherIds = teacherIds;
-        }
-
-        public List<List<Long>> getStudentIds() {
-            return studentIds;
-        }
-
-        public void setStudentIds(List<List<Long>> studentIds) {
-            this.studentIds = studentIds;
-        }
-    }
 
 }

@@ -17,7 +17,7 @@ left join fcimapp.schedule_cancelled_classes scc
 where 
 	(sch.week_parity is null or c.week_parity = sch.week_parity)
 	and (sch.group_id = ? or sch.teacher_id = ?)
-	and c.date_key = ?
+	and c.date_key between ? and ?
 union all
 select 
 	'dated' as class_type, schedule_entry_id, 0 as cancelled_flg
@@ -31,4 +31,4 @@ select
 from fcimapp.vw_denormalized_dated_schedule schd
 where
 	(schd.group_id = ? or schd.teacher_id = ?)
-	and schd.date_key = ?
+	and schd.date_key between ? and ?

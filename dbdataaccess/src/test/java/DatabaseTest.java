@@ -31,7 +31,8 @@ public class DatabaseTest {
 
     @Test
     public void testGetTeacherGroupedScheduleForDay() throws SQLException, ParseException {
-        List<GroupedScheduleEntry> ts = db.getTeacherGroupedScheduleForDay(df.parse("2019-03-18"), (long)1);
+        List<GroupedScheduleEntry> ts = db.getTeacherGroupedScheduleForDay(
+                df.parse("2019-03-18"), df.parse("2019-03-18"), (long)1);
         System.out.println(ts.get(0).getGroupedInfo());
     }
 
@@ -43,7 +44,8 @@ public class DatabaseTest {
 
     @Test
     public void testGetSchedule() throws ParseException, SQLException {
-        List<ScheduleEntry> e = db.getGroupScheduleForDay(df.parse("2019-03-18"), (long)1);
+        List<ScheduleEntry> e = db.getGroupScheduleForDay(
+                df.parse("2019-03-18"), df.parse("2019-03-18"), (long)1);
         System.out.println(e);
     }
 

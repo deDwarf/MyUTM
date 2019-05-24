@@ -168,34 +168,48 @@ public class Database {
     }
 
 
-    public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, Long teacherId) throws SQLException {
-        return getScheduleEntries(day, (long) -1, teacherId);
+    public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, java.util.Date tillDay,
+                                                        Long teacherId) throws SQLException {
+        return getScheduleEntries(day, tillDay, (long) -1, teacherId);
     }
 
-    public List<ScheduleEntry> getGroupScheduleForDay(java.util.Date day, Long groupId) throws SQLException {
-        return getScheduleEntries(day, groupId, (long) -1);
+    public List<ScheduleEntry> getGroupScheduleForDay(java.util.Date day, java.util.Date tillDay,
+                                                      Long groupId) throws SQLException {
+        return getScheduleEntries(day, tillDay, groupId, (long) -1);
     }
 
-    private List<ScheduleEntry> getScheduleEntries(java.util.Date day, Long groupId, Long teacherId)
+    @SuppressWarnings("Duplicates")
+    private List<ScheduleEntry> getScheduleEntries(java.util.Date day, java.util.Date tillDay,
+                                                   Long groupId, Long teacherId)
             throws SQLException {
         final ResultSetHandler<List<ScheduleEntry>> h = new BeanListHandler<>(ScheduleEntry.class, rowProcessor);
-        String date = formatter.format(day);
-        return runner.query(getScheduleForDayTemplateSQL, h, groupId, teacherId, date, groupId, teacherId, date);
+        String fromDate = formatter.format(day);
+        String tillDate = formatter.format(tillDay);
+        return runner.query(getScheduleForDayTemplateSQL, h,
+                groupId, teacherId, fromDate, tillDate,
+                groupId, teacherId, fromDate, tillDate);
     }
 
-    public List<GroupedScheduleEntry> getTeacherGroupedScheduleForDay(java.util.Date day, Long teacherId) throws SQLException {
-        return getGroupedScheduleEntries(day, (long) -1, teacherId);
+    public List<GroupedScheduleEntry> getTeacherGroupedScheduleForDay(java.util.Date day, java.util.Date tillDay,
+                                                                      Long teacherId) throws SQLException {
+        return getGroupedScheduleEntries(day, tillDay, (long) -1, teacherId);
     }
 
-    public List<GroupedScheduleEntry> getGroupedGroupScheduleForDay(java.util.Date day, Long groupId) throws SQLException {
-        return getGroupedScheduleEntries(day, groupId, (long) -1);
+    public List<GroupedScheduleEntry> getGroupedGroupScheduleForDay(java.util.Date day, java.util.Date tillDay,
+                                                                    Long groupId) throws SQLException {
+        return getGroupedScheduleEntries(day, tillDay, groupId, (long) -1);
     }
 
-    private List<GroupedScheduleEntry> getGroupedScheduleEntries(java.util.Date day, Long groupId, Long teacherId)
+    @SuppressWarnings("Duplicates")
+    private List<GroupedScheduleEntry> getGroupedScheduleEntries(java.util.Date day, java.util.Date tillDay,
+                                                                 Long groupId, Long teacherId)
             throws SQLException {
         final ResultSetHandler<List<GroupedScheduleEntry>> h = new BeanListHandler<>(GroupedScheduleEntry.class, rowProcessor);
-        String date = formatter.format(day);
-        return runner.query(getGroupedScheduleSQL, h, groupId, teacherId, date, groupId, teacherId, date);
+        String fromDate = formatter.format(day);
+        String tillDate = formatter.format(tillDay);
+        return runner.query(getGroupedScheduleSQL, h,
+                groupId, teacherId, fromDate, tillDate,
+                groupId, teacherId, fromDate, tillDate);
     }
 
     public List<RegularScheduleEntry> getRegularSchedule(Long groupId)
