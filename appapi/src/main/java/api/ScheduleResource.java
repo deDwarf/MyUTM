@@ -5,7 +5,10 @@ import api.common.Message;
 import com.google.gson.reflect.TypeToken;
 import core.AppContext;
 import core.Roles;
+import core.exceptions.BadRequestRuntimeException;
 import exporter.ScheduleExporter;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojos.*;
@@ -204,16 +207,11 @@ public class ScheduleResource extends CommonResource {
     @POST
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     @Path("export/")
-    public Response getScheduleExportGroupedByGroups(@FormParam("groupIds") String groupIds,
-                                                     @FormParam("teacherIds") String teacherIds)
-            throws SQLException, IOException {
-        List<Long> pteacherIds = teacherIds == null ?
-                new ArrayList<>()
-                : Arrays.stream(teacherIds.split(",")).map(Long::parseLong).collect(Collectors.toList());
-        List<Long> pgroupIds = groupIds == null ?
-                new ArrayList<>()
-                : Arrays.stream(groupIds.split(",")).map(Long::parseLong).collect(Collectors.toList());
-        java.nio.file.Path finalFile = this.exportSchedule(pteacherIds, pgroupIds);
+    public Response getScheduleExportGroupedByGroups(@FormParam("name") List<String> names,
+                                                     @FormParam("type") List<String> types,
+                                                     @FormParam("ids") List<String> ids) throws SQLException, IOException {
+        List<ExportRequestEntryEntity> input = ExportRequestEntryEntity.create(names, types, ids);
+        java.nio.file.Path finalFile = this.exportSchedule(input);
         StreamingOutput so = outputStream -> {
             outputStream.write(Files.readAllBytes(finalFile));
             outputStream.flush();
@@ -222,41 +220,36 @@ public class ScheduleResource extends CommonResource {
         return Response
                 .ok(so, MediaType.APPLICATION_OCTET_STREAM)
                 .header("Content-Disposition", "attachment; filename=\"" + finalFile.getFileName().toString() + "\"")
-                // .header("filename", finalFile.getFileName().toString())
                 .build();
     }
 
-    private java.nio.file.Path exportSchedule(List<Long> teacherIds, List<Long> groupIds) throws IOException, SQLException {
+    private java.nio.file.Path exportSchedule(List<ExportRequestEntryEntity> entities) throws IOException, SQLException {
         ScheduleExporter e = new ScheduleExporter();
-        java.nio.file.Path finalFile;
-        List<File> outFiles = new LinkedList<>();
+        List<Pair<File, String>> outFiles = new LinkedList<>();
         // generate files
-        if (groupIds != null && !groupIds.isEmpty()) {
-            File export = e.exportStudentSchedule(groupIds);
-            outFiles.add(export);
-            delayedDeleteFile(export, 2000 * 60);
-        }
-        if (teacherIds != null && !teacherIds.isEmpty()) {
-            File export = e.exportTeacherSchedule(teacherIds);
-            outFiles.add(export);
+        for (ExportRequestEntryEntity entity: entities) {
+            File export;
+            if (entity.getType() == ExportRequestEntryEntity.Type.GROUP) {
+                export = e.exportStudentSchedule(entity.getIds());
+            } else {
+                export = e.exportTeacherSchedule(entity.getIds());
+            }
+            outFiles.add(new ImmutablePair<>(export, entity.getFileName()));
             delayedDeleteFile(export, 2000 * 60);
         }
 
-        if (outFiles.size() == 1) {
-            finalFile = outFiles.get(0).toPath();
-        } else {
-            finalFile = this.compressAsZip(outFiles);
-            delayedDeleteFile(new File(finalFile.toUri()), 2000 * 60);
-        }
+        java.nio.file.Path finalFile = this.compressAsZip(outFiles);
+        delayedDeleteFile(new File(finalFile.toUri()), 2000 * 60);
         return finalFile;
     }
 
-    private java.nio.file.Path compressAsZip(List<File> files) throws IOException {
+    private java.nio.file.Path compressAsZip(List<Pair<File, String>> files) throws IOException {
         File zip = File.createTempFile("schedule-export-", ".zip", AppContext.getInstance().TMP_DIR);
         ZipOutputStream zou = new ZipOutputStream(new FileOutputStream(zip));
-        for (File file : files) {
-            zou.putNextEntry(new ZipEntry(file.getName()));
-            zou.write(Files.readAllBytes(file.toPath()));
+        for (Pair<File, String> file : files) {
+            String fileName = file.getRight() == null ? file.getLeft().getName() : file.getRight();
+            zou.putNextEntry(new ZipEntry(fileName));
+            zou.write(Files.readAllBytes(file.getLeft().toPath()));
             zou.closeEntry();
         }
         zou.flush();
@@ -276,6 +269,79 @@ public class ScheduleResource extends CommonResource {
             }
         }, delay);
     }
+}
 
+class ExportRequestEntryEntity {
+    enum Type {TEACHER, GROUP}
+    
+    private String fileName;
+    private Type type;
+    private List<Long> ids;
 
+    static List<ExportRequestEntryEntity> create(List<String> names, List<String> types, List<String> ids) {
+        List<ExportRequestEntryEntity> entries = new ArrayList<>(names.size());
+        normalizeNames(names);
+        if (names.size() != types.size() || names.size() != ids.size()) {
+            throw new RuntimeException("Invalid input params");
+        }
+        for (int i = 0; i < names.size(); i++) {
+            if (!"".equals(ids.get(i).trim())) {
+                List<Long> entryIds = Arrays.stream(ids.get(i).split(",")).map(Long::parseLong).collect(Collectors.toList());
+                entries.add(new ExportRequestEntryEntity(names.get(i), types.get(i), entryIds));
+            }
+        }
+        return entries;
+    }
+
+    private static void normalizeNames(List<String> names) {
+        // make unique
+        int counter = 1;
+        for (int i = 0; i < names.size(); i++) {
+            for (int j = 0; j < i; j++) {
+                if (names.get(i).equalsIgnoreCase(names.get(j))) {
+                    names.set(i, names.get(i) + String.valueOf(counter++));
+                }
+            }
+        }
+        // add extensions
+        for (int i = 0; i < names.size(); i++) {
+            if (!names.get(i).endsWith(".xls")) {
+                names.set(i, names.get(i) + ".xls");
+            }
+        }
+    }
+    
+    private ExportRequestEntryEntity(String fileName, String type, List<Long> ids) {
+        this.fileName = fileName;
+        this.ids = ids;
+        try {
+            this.type = Type.valueOf(type.toUpperCase().trim());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestRuntimeException("Unknown export entry type: " + type);
+        }
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
+
+    public List<Long> getIds() {
+        return ids;
+    }
+
+    public void setIds(List<Long> ids) {
+        this.ids = ids;
+    }
 }

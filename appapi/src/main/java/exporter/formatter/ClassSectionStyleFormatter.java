@@ -13,19 +13,21 @@ import java.util.List;
 
 public class ClassSectionStyleFormatter {
     private HSSFWorkbook wb;
+    private MyClassSectionTypeHandler handler;
 
     public ClassSectionStyleFormatter(HSSFWorkbook wb) {
         if (ScheduleExporter.TemplateConstant.ONE_CLASS_SECTION_CELL_HEIGHT.val != 6) {
             throw new IllegalStateException("Implemented to work exclusively with cell height = 6");
         }
         this.wb = wb;
+        this.handler = new MyClassSectionTypeHandler(wb);
     }
 
     public void format(List<GroupedRegularScheduleEntry> re, Cell[] cells) {
         assert cells != null;
         assert cells.length == 6;
 
-        ClassSectionTypeResolver.resolve(re, new MyClassSectionTypeHandler(wb), cells);
+        ClassSectionTypeResolver.resolve(re, handler, cells);
     }
 
     private class MyClassSectionTypeHandler extends AbstractClassSectionTypeHandler {

@@ -7,6 +7,7 @@ public class JaxRsAppConfig extends ResourceConfig {
     public JaxRsAppConfig() {
         super();
         this.register(SQLExceptionHandler.class);
+        this.register(BadRequestRuntimeExceptionHandler.class);
         this.register(BadRequestExceptionHandler.class);
         this.register(AuthenticationRequestFilter.class);
         this.register(RolesAllowedDynamicFeature.class);
