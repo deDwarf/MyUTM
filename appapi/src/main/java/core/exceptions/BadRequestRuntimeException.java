@@ -8,6 +8,6 @@ public class BadRequestRuntimeException extends RuntimeException {
     private static final Gson g = new Gson();
 
     public BadRequestRuntimeException(String message) {
-        super(g.toJson(message));
+        super(g.toJson(new Message(message)));
     }
 }

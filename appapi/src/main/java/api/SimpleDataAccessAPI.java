@@ -3,6 +3,7 @@ package api;
 import api.common.CommonResource;
 import api.common.Message;
 import core.Roles;
+import core.exceptions.BadRequestRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojos.ClassesTimeSchedule;
@@ -108,9 +109,7 @@ public class SimpleDataAccessAPI extends CommonResource {
                                               @QueryParam("groupNumber") String groupNumber,
                                               @QueryParam("date") String date) throws SQLException {
         if (!validateNotEmpty(teacherUsername, date) || groupId == null && groupNumber == null) {
-            return Response.status(400)
-                    .entity(new Message("Teacher username, date and either group number or id must not be empty"))
-                    .build();
+            throw new BadRequestRuntimeException("Teacher username, date and either group number or id must not be empty");
         }
         Teacher t = db.getTeacher(teacherUsername);
         List<ClassesTimeSchedule> ct = db.getFreeTimeForDateAndTeacherAndGroup(parseDate(date), groupId, t.getTeacherId());

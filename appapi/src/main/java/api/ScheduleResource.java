@@ -12,6 +12,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pojos.*;
+import pojos.helper.EntryIdAndGroupIdAndGroupName;
+import pojos.req.CancelLessonRequestEntity;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
@@ -62,7 +64,18 @@ public class ScheduleResource extends CommonResource {
     @Consumes(MediaType.TEXT_PLAIN)
     @Path("regular/cancel")
     public Response cancelRegularClass(String data) throws SQLException {
-        return RESPONSE_NOT_IMPLEMENTED;
+        // date(s), ids
+        // {date: "", ids: [{type: "", id: ""}, {}..]
+        CancelLessonRequestEntity input = gson.fromJson(data, CancelLessonRequestEntity.class);
+        db.cancelDatedClasses(input.getIds().stream()
+                .filter(e -> "dated".equals(e.getScheduleEntryType()))
+                .map(EntryIdAndGroupIdAndGroupName::getScheduleEntryId)
+                .collect(Collectors.toList()));
+        db.cancelRegularClasses(input.getDate(), input.getIds().stream()
+                .filter(e -> "regular".equals(e.getScheduleEntryType()))
+                .map(EntryIdAndGroupIdAndGroupName::getScheduleEntryId)
+                .collect(Collectors.toList()));
+        return Response.ok().build();
     }
 
     @POST

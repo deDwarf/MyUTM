@@ -281,6 +281,30 @@ public class Database {
                 e.getTeacherId(), e.getSubjectId(), e.getSubjectTypeId()).longValue();
     }
 
+    public void cancelRegularClasses(Date date, List<Long> ids) throws SQLException {
+        final ResultSetHandler<BigInteger> h = new ScalarHandler<>();
+        Object[][] batchParams = new Object[ids.size()][2];
+        for (int i = 0; i < ids.size(); i++) {
+            batchParams[0][i] = ids.get(i);
+            batchParams[1][i] = date;
+        }
+        runner.insertBatch("INSERT INTO fcimapp.schedule_cancelled_classes" +
+                "(schedule_id, cancelled_for_date) VALUES(?, ?)", h, batchParams);
+    }
+
+    public void cancelDatedClasses(List<Long> ids) throws SQLException {
+        final ResultSetHandler<BigInteger> h = new ScalarHandler<>();
+        if (ids == null || ids.isEmpty()) {
+            return;
+        }
+        StringBuilder bldr = new StringBuilder("DELETE FROM fcimapp.schedule_dated_classes WHERE entry_id in (?");
+        for (int i = 1; i < ids.size(); i++) {
+            bldr.append(", ?");
+        }
+
+        runner.update(bldr.append(")").toString(), h, ids.toArray());
+    }
+
     // --- functions
 
     public List<Classroom> getFreeClassroomsForDateAndTime(java.util.Date date, Long classNumber) throws SQLException {

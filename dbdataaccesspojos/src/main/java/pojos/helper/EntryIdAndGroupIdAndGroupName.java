@@ -1,9 +1,18 @@
 package pojos.helper;
 
 public class EntryIdAndGroupIdAndGroupName {
+    private String scheduleEntryType;
     private long scheduleEntryId;
     private long groupId;
     private String groupNumber;
+
+    public String getScheduleEntryType() {
+        return scheduleEntryType;
+    }
+
+    public void setScheduleEntryType(String scheduleEntryType) {
+        this.scheduleEntryType = scheduleEntryType;
+    }
 
     public long getScheduleEntryId() {
         return scheduleEntryId;
