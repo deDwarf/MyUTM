@@ -1,4 +1,4 @@
-package exceptions;
+package core.exceptions;
 
 public class BadRequestException extends RuntimeException {
     public BadRequestException() {

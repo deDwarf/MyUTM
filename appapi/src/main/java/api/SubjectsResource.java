@@ -1,14 +1,13 @@
 package api;
 
-import api.common.CommonResource;
+import api.common.SimpleCUDResource;
+import core.Roles;
 import pojos.Subject;
 import pojos.SubjectType;
 
 import javax.annotation.security.PermitAll;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.sql.SQLException;
@@ -16,7 +15,11 @@ import java.util.List;
 
 @Path("/subjects")
 @PermitAll
-public class SubjectsResource extends CommonResource {
+public class SubjectsResource extends SimpleCUDResource<Subject> {
+
+    public SubjectsResource() {
+        super(Subject.class, "subjects");
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -47,6 +50,30 @@ public class SubjectsResource extends CommonResource {
     public Response getSubjectType(@PathParam("subjectTypeId") Long subjectTypeId) throws SQLException {
         SubjectType subjectType = db.getSubjectType(subjectTypeId);
         return Response.ok(gson.toJson(subjectType)).build();
+    }
+
+    @Override
+    @POST
+    @RolesAllowed({Roles.ADMIN})
+    public Response add(String json) {
+        return super.add(json);
+    }
+
+    @Override
+    @PUT
+    @RolesAllowed({Roles.ADMIN})
+    public Response update(@FormParam("pk") Long id,
+                           @FormParam("name") String fieldName,
+                           @FormParam("value") String fieldValue) {
+        return super.update(id, fieldName, fieldValue);
+    }
+
+    @Override
+    @DELETE
+    @RolesAllowed({Roles.ADMIN})
+    @Path("/{classroomId}")
+    public Response delete(@PathParam("classroomId") Long id) {
+        return super.delete(id);
     }
 
 }

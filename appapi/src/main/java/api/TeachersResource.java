@@ -1,9 +1,11 @@
 package api;
 
 import api.common.SimpleCUDResource;
+import core.Roles;
 import pojos.Teacher;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -34,12 +36,14 @@ public class TeachersResource extends SimpleCUDResource<Teacher> {
 
     @Override
     @POST
+    @RolesAllowed({Roles.ADMIN})
     public Response add(String json) {
         return super.add(json);
     }
 
     @Override
     @PUT
+    @RolesAllowed({Roles.ADMIN})
     public Response update(@FormParam("pk") Long id,
                            @FormParam("name") String fieldName,
                            @FormParam("value") String fieldValue) {
@@ -48,6 +52,7 @@ public class TeachersResource extends SimpleCUDResource<Teacher> {
 
     @Override
     @DELETE
+    @RolesAllowed({Roles.ADMIN})
     @Path("/{teacherId}")
     public Response delete(@PathParam("teacherId") Long id) {
         return super.delete(id);

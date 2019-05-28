@@ -3,7 +3,7 @@ package api.common;
 import com.google.gson.Gson;
 import core.AppContext;
 import core.Database;
-import exceptions.InvalidDateFormatException;
+import core.exceptions.InvalidDateFormatException;
 
 import javax.ws.rs.core.Response;
 import java.text.ParseException;

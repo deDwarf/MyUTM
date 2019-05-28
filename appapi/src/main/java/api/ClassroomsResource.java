@@ -1,9 +1,11 @@
 package api;
 
-import api.common.CommonResource;
+import api.common.SimpleCUDResource;
+import core.Roles;
 import pojos.Classroom;
 
 import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -13,7 +15,12 @@ import java.util.List;
 
 @Path("/classrooms")
 @PermitAll
-public class ClassroomsResource extends CommonResource {
+public class ClassroomsResource extends SimpleCUDResource<Classroom> {
+
+    public ClassroomsResource() {
+        super(Classroom.class, "classrooms");
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getListOfClassrooms() throws SQLException {
@@ -39,6 +46,30 @@ public class ClassroomsResource extends CommonResource {
         }
         List<Classroom> classrooms = db.getFreeClassroomsForDateAndTime(parseDate(date), classNumber);
         return Response.ok(gson.toJson(classrooms)).build();
+    }
+
+    @Override
+    @POST
+    @RolesAllowed({Roles.ADMIN})
+    public Response add(String json) {
+        return super.add(json);
+    }
+
+    @Override
+    @PUT
+    @RolesAllowed({Roles.ADMIN})
+    public Response update(@FormParam("pk") Long id,
+                           @FormParam("name") String fieldName,
+                           @FormParam("value") String fieldValue) {
+        return super.update(id, fieldName, fieldValue);
+    }
+
+    @Override
+    @DELETE
+    @RolesAllowed({Roles.ADMIN})
+    @Path("/{classroomId}")
+    public Response delete(@PathParam("classroomId") Long id) {
+        return super.delete(id);
     }
 
 }

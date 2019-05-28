@@ -1,6 +1,6 @@
 package core;
 
-import exceptions.InvalidDateFormatException;
+import core.exceptions.InvalidDateFormatException;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;

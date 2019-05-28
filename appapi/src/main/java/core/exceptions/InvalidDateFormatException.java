@@ -1,4 +1,4 @@
-package exceptions;
+package core.exceptions;
 
 public class InvalidDateFormatException extends BadRequestException {
 

@@ -24,23 +24,28 @@ public class ScheduleInspectionsResource extends CommonResource {
         List<InspectionResult> results = new ArrayList<>();
 
         List<List<RegularScheduleEntry>> tc = insp.runOneTeacherManyClassroomsInspection();
-        tc.forEach(entries -> {
-            InspectionResult r = new InspectionResult(ResultType.ONE_TEACHER_MANY_CLASSROOMS, entries);
-            results.add(r);
-        });
+        if (!tc.isEmpty()) {
+            tc.forEach(entries -> {
+                InspectionResult r = new InspectionResult(ResultType.ONE_TEACHER_MANY_CLASSROOMS, entries);
+                results.add(r);
+            });
+        }
 
         List<List<RegularScheduleEntry>> cs = insp.runOneClassroomManySubjectsInspection();
-        cs.forEach(entries -> {
-            InspectionResult r = new InspectionResult(ResultType.ONE_CLASSROOM_MANY_SUBJECTS, entries);
-            results.add(r);
-        });
+        if (!cs.isEmpty()) {
+            cs.forEach(entries -> {
+                InspectionResult r = new InspectionResult(ResultType.ONE_CLASSROOM_MANY_SUBJECTS, entries);
+                results.add(r);
+            });
+        }
 
         List<List<RegularScheduleEntry>> ct = insp.runOneClassroomManyTeachersInspection();
-        ct.forEach(entries -> {
-            InspectionResult r = new InspectionResult(ResultType.ONE_CLASSROOM_MANY_TEACHERS, entries);
-            results.add(r);
-        });
-
+        if (!ct.isEmpty()) {
+            ct.forEach(entries -> {
+                InspectionResult r = new InspectionResult(ResultType.ONE_CLASSROOM_MANY_TEACHERS, entries);
+                results.add(r);
+            });
+        }
 
         return Response.ok().entity(gson.toJson(results)).build();
     }
