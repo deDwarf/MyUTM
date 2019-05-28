@@ -2,6 +2,9 @@ package api;
 
 import api.common.CommonResource;
 import authpojos.Account;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.ImmutableBiMap;
 import core.AppContext;
 import core.Database;
 import core.Roles;
@@ -12,20 +15,33 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.apache.commons.mail.DefaultAuthenticator;
+import org.apache.commons.mail.Email;
+import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.SimpleEmail;
+import org.glassfish.jersey.server.mvc.Template;
+import org.glassfish.jersey.server.mvc.Viewable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pojos.Teacher;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.math.BigInteger;
 import java.security.Key;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides implementation for authorizing users and issuing tokens
@@ -37,7 +53,11 @@ import java.util.UUID;
 @PermitAll
 public class AuthAPI extends CommonResource {
     private Database db = AppContext.getInstance().getDB();
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
     public static final Key KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+    @Context
+    UriInfo uri;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -150,15 +170,58 @@ public class AuthAPI extends CommonResource {
         return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
     }
 
+    private static BiMap<Long, String> teacherIdToInvitationId = HashBiMap.create();
+
     @POST
-    @RolesAllowed(Roles.ADMIN)
+    //@RolesAllowed(Roles.ADMIN)
+    @Path("register/teacher/invite/{teacherId}")
+    public Response inviteTeacher(@PathParam("teacherId") Long teacherId) {
+        SecureRandom rand  = new SecureRandom();
+        StringBuilder keyBuilder = new StringBuilder();
+        keyBuilder.append(Math.abs(rand.nextLong()));
+        for (int i = 0; i < 4; i++) {
+            keyBuilder.append('-').append(Math.abs(rand.nextLong()));
+        }
+        String key = keyBuilder.toString();
+        teacherIdToInvitationId.put(teacherId, key);
+        log.info("key: " + key + ", uri: " + uri.getBaseUri().toString());
+        try {
+            Teacher t = db.getTeacher(teacherId);
+            sendEmail(t, uri.getBaseUri().toString(), teacherIdToInvitationId.get(teacherId));
+        } catch (SQLException | EmailException e) {
+            e.printStackTrace();
+            return Response.status(500).entity(e.getMessage()).build();
+        }
+        return Response.ok().build();
+    }
+
+
+    @GET
+    @Path("register/teacher/accept-invite")
+    public Viewable acceptInvitation(@QueryParam("invitationId") String invitationId) {
+        if (invitationId != null && teacherIdToInvitationId.containsValue(invitationId)) {
+            Map<String, String> model = new HashMap<>();
+            model.put("teacherId", String.valueOf(teacherIdToInvitationId.inverse().get(invitationId)));
+            model.put("invitationId", invitationId);
+            return new Viewable("/accept_invitation.ftl", model);
+        } else {
+            return new Viewable("/error.ftl");
+        }
+
+    }
+
+    @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Path("register/teacher/")
     public Response registerTeacher(@QueryParam("teacherId") BigInteger teacherId,
-                                    @QueryParam("password") String password)
+                                    @QueryParam("password") String password,
+                                    @QueryParam("invitationId") String invitationId)
             throws CannotPerformOperationException, SQLException {
-        if (password == null || teacherId == null) {
+        if (password == null || teacherId == null || invitationId == null) {
             return RESPONSE_BAD_REQUEST.entity("password and teacherId must not be null").build();
+        }
+        if (!teacherIdToInvitationId.get(teacherId.longValue()).equals(invitationId)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
         }
         Map<String, String> response = new HashMap<>();
         Teacher t = db.getTeacher(teacherId.longValue());
@@ -173,8 +236,24 @@ public class AuthAPI extends CommonResource {
         db.linkTeacherWithAccount(teacherId, acctId);
         response.put("success", "true");
 
+        teacherIdToInvitationId.remove(teacherId.longValue());
         return Response.ok(AppContext.getInstance().GSON.toJson(response)).build();
     }
+
+    private void sendEmail(Teacher t, String baseUri, String key) throws EmailException {
+        Email email = new SimpleEmail();
+        email.setHostName("smtp.googlemail.com");
+        email.setSmtpPort(465);
+        email.setAuthenticator(new DefaultAuthenticator("fcimapp", "nobodyalive"));
+        email.setSSLOnConnect(true);
+        email.setFrom("fcimapp@gmail.com", "FCIM App");
+        email.setSubject("You have been invited to join FCIMApp application");
+        email.setMsg(String.format("Hi %s! Please check the following link to complete registration process: %s",
+                t.getFirstNm(), baseUri + "auth/invitation/accept?invitationId=" + key));
+        email.addTo(t.getPrimaryEmail());
+        email.send();
+    }
+
 
     private boolean validateUserNameAndPassword(Account u, String username, String password)
             throws InvalidHashException, CannotPerformOperationException {

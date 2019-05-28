@@ -57,6 +57,13 @@
             <artifactId>jersey-container-grizzly2-servlet</artifactId>
             <version>${jersey.version}</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.ext/jersey-mvc -->
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-mvc-freemarker</artifactId>
+            <version>${jersey.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -84,6 +91,12 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.4</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-email -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-email</artifactId>
+            <version>1.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
