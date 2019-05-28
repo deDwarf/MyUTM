@@ -44,7 +44,7 @@ public class ScheduleResource extends CommonResource {
     public Response registerRegularClass(String data) throws SQLException {
         RegularScheduleEntry parsedData = gson.fromJson(data, RegularScheduleEntry.class);
         RegularScheduleEntry entry = db.registerRegularLesson("fcimapp.schedule", parsedData);
-
+        fcm.notifyLessonRegistered(entry);
         // group, teacher, date, time, classroom, subject, subject_type
         return Response.ok(gson.toJson(entry)).build();
     }
@@ -104,6 +104,7 @@ public class ScheduleResource extends CommonResource {
             scheduleEntry.setTeacherId(Math.toIntExact(t.getTeacherId()));
         }
         Long id = db.registerDatedClass(scheduleEntry);
+        fcm.notifyLessonRegistered(db.getDatedScheduleEntry(id));
         return Response.ok(gson.toJson(new Message(String.valueOf(id)))).build();
     }
 

@@ -17,6 +17,6 @@ public class JaxRsAppConfig extends ResourceConfig {
         AppContext.getInstance().loadDatabaseController("db-remote.properties");
 
         property(FreemarkerMvcFeature.TEMPLATE_BASE_PATH, "/pages/freemaker");
-        register(FreemarkerMvcFeature.class);;
+        register(FreemarkerMvcFeature.class);
     }
 }

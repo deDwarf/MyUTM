@@ -70,20 +70,22 @@ public class BufferedFCMServiceImpl implements IFCMService{
 
     }
 
+    private final static String rseCancelTitleTemplate = "A class has been cancelled";
+    private final static String rseCancelBodyTemplate = "%s. %s class will be taking place every%s %s at %s-%s";
     @Override
     public void notifyLessonCancelled(ScheduleEntry e) {
 
     }
 
     // TODO String.format() is very-very slow
-    private final static String rseAddTitleTemplate = "A class has been scheduled for every%s %s(#%s)";
+    private final static String rseAddTitleTemplate = "Some lesson was added";
     private final static String rseAddBodyTemplate = "%s. %s classes will be taking place every%s %s at %s-%s";
     @Override
     public void notifyLessonRegistered(RegularScheduleEntry e) {
         String weekday = DayOfWeek.of((int)e.getWeekDay()).getDisplayName(TextStyle.FULL, Locale.US);
         Message msg = Message.builder()
                 .setNotification(new Notification(
-                        String.format(rseAddTitleTemplate, e.getWeekParity(), weekday, e.getClassNumber()),
+                        rseAddTitleTemplate,
                         String.format(rseAddBodyTemplate, e.getSubjectTypeAbbreviated(), e.getSubjectNameAbbreviated(),
                                 e.getWeekParity(), weekday, e.getClassStartTime(), e.getClassEndTime())
                 ))
@@ -96,16 +98,15 @@ public class BufferedFCMServiceImpl implements IFCMService{
         }
     }
 
-    private final static String seAddTitleTemplate = "Teacher <%s> has scheduled a class for %s";
-    private final static String seAddBodyTemplate = "'%s' class will take place at %s, %s-%s(#%s)";
+    private final static String seAddTitleTemplate = "Some lesson was added";
+    private final static String seAddBodyTemplate = "'%s' class will take place at %s, %s-%s";
     @Override
     public void notifyLessonRegistered(ScheduleEntry e) {
-        String teacherDisplayName = abbreviateTeacherName(e.getTeacherFirstName(), e.getTeacherSecondName(), e.getTeacherMiddleName());
         Message msg = Message.builder()
                 .setNotification(new Notification(
-                        String.format(seAddTitleTemplate, teacherDisplayName, FDF_LONG.format(e.getDate())),
-                        String.format(seAddBodyTemplate, e.getSubjectName(),FDF_SHORT.format(e.getDate()),
-                                e.getClassStartTime(), e.getClassEndTime(), e.getClassNumber())
+                        seAddTitleTemplate,
+                        String.format(seAddBodyTemplate, e.getSubjectNameAbbreviated(),FDF_SHORT.format(e.getDate()),
+                                e.getClassStartTime(), e.getClassEndTime())
                 ))
                 .setTopic(GROUP_TOPIC_TEMPLATE + e.getGroupId())
                 .build();

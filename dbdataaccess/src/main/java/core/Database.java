@@ -28,6 +28,7 @@ public class Database {
     protected DataSource src;
     protected QueryRunner runner;
 
+    private final String getDatedScheduleEntryById;
     private final String getFreeTime;
     private final String getGroupedScheduleSQL;
     private final String getFreeClassrooms;
@@ -39,6 +40,8 @@ public class Database {
     private Database() {
         this.getScheduleForDayTemplateSQL = readSQLFromResources(
                 "select_schedule_for_date.sql");
+        this.getDatedScheduleEntryById = readSQLFromResources(
+                "select_schedule_by_id.sql");
         this.getStudentByEmail = readSQLFromResources(
                 "select_student_by_email.sql");
         this.getStudentById = readSQLFromResources(
@@ -167,6 +170,11 @@ public class Database {
         return runner.query("select distinct `group_name` from fcimapp.Groups", h);
     }
 
+
+    public ScheduleEntry getDatedScheduleEntry(Long id) throws SQLException {
+        final ResultSetHandler<ScheduleEntry> h = new BeanHandler<>(ScheduleEntry.class, rowProcessor);
+        return runner.query(this.getDatedScheduleEntryById, h, id);
+    }
 
     public List<ScheduleEntry> getTeacherScheduleForDay(java.util.Date day, java.util.Date tillDay,
                                                         Long teacherId) throws SQLException {

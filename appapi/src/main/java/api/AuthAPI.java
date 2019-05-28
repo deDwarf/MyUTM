@@ -4,7 +4,6 @@ import api.common.CommonResource;
 import authpojos.Account;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.google.common.collect.ImmutableBiMap;
 import core.AppContext;
 import core.Database;
 import core.Roles;
@@ -19,7 +18,6 @@ import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
-import org.glassfish.jersey.server.mvc.Template;
 import org.glassfish.jersey.server.mvc.Viewable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +25,6 @@ import pojos.Teacher;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -41,7 +38,6 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provides implementation for authorizing users and issuing tokens
@@ -173,7 +169,7 @@ public class AuthAPI extends CommonResource {
     private static BiMap<Long, String> teacherIdToInvitationId = HashBiMap.create();
 
     @POST
-    //@RolesAllowed(Roles.ADMIN)
+    @RolesAllowed(Roles.ADMIN)
     @Path("register/teacher/invite/{teacherId}")
     public Response inviteTeacher(@PathParam("teacherId") Long teacherId) {
         SecureRandom rand  = new SecureRandom();
@@ -187,7 +183,7 @@ public class AuthAPI extends CommonResource {
         log.info("key: " + key + ", uri: " + uri.getBaseUri().toString());
         try {
             Teacher t = db.getTeacher(teacherId);
-            sendEmail(t, uri.getBaseUri().toString(), teacherIdToInvitationId.get(teacherId));
+            sendEmail(t, uri.getBaseUri().toString().replaceFirst("http[s]?", "https"), teacherIdToInvitationId.get(teacherId));
         } catch (SQLException | EmailException e) {
             e.printStackTrace();
             return Response.status(500).entity(e.getMessage()).build();
@@ -196,8 +192,9 @@ public class AuthAPI extends CommonResource {
     }
 
 
+    private final static String ACCEPT_INVITATION_PATH = "register/teacher/accept-invite";
     @GET
-    @Path("register/teacher/accept-invite")
+    @Path(ACCEPT_INVITATION_PATH)
     public Viewable acceptInvitation(@QueryParam("invitationId") String invitationId) {
         if (invitationId != null && teacherIdToInvitationId.containsValue(invitationId)) {
             Map<String, String> model = new HashMap<>();
@@ -213,9 +210,9 @@ public class AuthAPI extends CommonResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Path("register/teacher/")
-    public Response registerTeacher(@QueryParam("teacherId") BigInteger teacherId,
-                                    @QueryParam("password") String password,
-                                    @QueryParam("invitationId") String invitationId)
+    public Response registerTeacher(@FormParam("teacherId") BigInteger teacherId,
+                                    @FormParam("password") String password,
+                                    @FormParam("invitationId") String invitationId)
             throws CannotPerformOperationException, SQLException {
         if (password == null || teacherId == null || invitationId == null) {
             return RESPONSE_BAD_REQUEST.entity("password and teacherId must not be null").build();
@@ -249,7 +246,7 @@ public class AuthAPI extends CommonResource {
         email.setFrom("fcimapp@gmail.com", "FCIM App");
         email.setSubject("You have been invited to join FCIMApp application");
         email.setMsg(String.format("Hi %s! Please check the following link to complete registration process: %s",
-                t.getFirstNm(), baseUri + "auth/invitation/accept?invitationId=" + key));
+                t.getFirstNm(), baseUri + ACCEPT_INVITATION_PATH + "?invitationId=" + key));
         email.addTo(t.getPrimaryEmail());
         email.send();
     }

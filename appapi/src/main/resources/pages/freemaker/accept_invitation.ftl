@@ -9,10 +9,10 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </head>
 <body class="text-center">
-    <form class="form-signin" action="api/auth/register/teacher" method="post">
+    <form class="form-signin" action="/api/auth/register/teacher" method="post">
         <img class="mb-4" src="img/admin.png" alt="" width="72" height="72">
         <h1 class="h3 mb-3 font-weight-normal">Complete your registration</h1>
-        <h5 class="mb-3 font-weight-light">Your login will be the email address where you received invitation</h3>
+        <h5 class="mb-3 font-weight-light">Your login will be the email address where you received invitation</h5>
         <input type="text" id="invitationId" name="invitationId" class="form-control d-none" required="" autofocus="" value="${invitationId}">
         <input type="text" id="teacherId" name="teacherId" class="form-control d-none" required="" autofocus="" value="${teacherId}">
         <input type="password" id="inputPassword" name="password" class="form-control" placeholder="Password" required="">

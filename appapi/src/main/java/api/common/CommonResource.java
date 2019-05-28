@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import core.AppContext;
 import core.Database;
 import core.exceptions.InvalidDateFormatException;
+import fcm.IFCMService;
 
 import javax.ws.rs.core.Response;
 import java.text.ParseException;
@@ -16,6 +17,7 @@ public abstract class CommonResource {
 
     protected final Database db = AppContext.getInstance().getDB();
     protected final Gson gson = AppContext.getInstance().GSON;
+    protected final IFCMService fcm = AppContext.getInstance().fcm;
 
     private final SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd");
 

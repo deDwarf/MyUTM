@@ -2,6 +2,7 @@ package core;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import fcm.BufferedFCMServiceImpl;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -18,12 +19,18 @@ public class AppContext {
             .setPrettyPrinting()
             .setDateFormat("yyyy-MM-dd")
             .create();
-
+    public BufferedFCMServiceImpl fcm;
     public static AppContext getInstance() {
         return inst;
     }
 
     private AppContext() {
+        try {
+            this.fcm = BufferedFCMServiceImpl.getInstance();
+        } catch (Exception e) {
+            System.out.println("Something went wrong with FCM " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public void loadDatabaseController(String propertiesFile) {
