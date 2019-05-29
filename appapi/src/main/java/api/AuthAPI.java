@@ -192,9 +192,10 @@ public class AuthAPI extends CommonResource {
     }
 
 
-    private final static String ACCEPT_INVITATION_PATH = "register/teacher/accept-invite";
+    private final static String ACCEPT_INVITATION_PATH = "auth/register/teacher/accept-invite";
+
     @GET
-    @Path(ACCEPT_INVITATION_PATH)
+    @Path("register/teacher/accept-invite")
     public Viewable acceptInvitation(@QueryParam("invitationId") String invitationId) {
         if (invitationId != null && teacherIdToInvitationId.containsValue(invitationId)) {
             Map<String, String> model = new HashMap<>();

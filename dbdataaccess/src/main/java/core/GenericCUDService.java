@@ -55,7 +55,7 @@ public class GenericCUDService<T> {
                 .map(mapEntry -> ((String)mapEntry.get("COLUMN_NAME")).toUpperCase().trim())
                 .collect(Collectors.toSet());
 
-        Map<String, Object> key = mh.handle(c.getMetaData().getPrimaryKeys(null, schemaName, tableName));
+        Map<String, Object> key = mh.handle(c.getMetaData().getPrimaryKeys("fcimapp", schemaName, tableName));
         if (key == null || key.size() == 0) {
             throw new NoKeyException(tableName);
         }
