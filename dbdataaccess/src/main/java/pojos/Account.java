@@ -1,4 +1,4 @@
-package authpojos;
+package pojos;
 
 import java.sql.Date;
 

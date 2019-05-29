@@ -17,9 +17,9 @@ public class InspectionsService {
 
     public InspectionsService(Database db) {
         this.db = db;
-        this.oneTeacherManyClassroomQuery = Database.readSQLFromResources("select_one_teacher_many_classroom.sql");
-        this.oneClassroomManySubjectsQuery = Database.readSQLFromResources("select_one_classroom_many_subject.sql");
-        this.oneClassroomManyTeachersQuery = Database.readSQLFromResources("select_one_classroom_many_teachers.sql");
+        this.oneTeacherManyClassroomQuery = Database.readSQLFromResources("inspections/select_one_teacher_many_classroom.sql");
+        this.oneClassroomManySubjectsQuery = Database.readSQLFromResources("inspections/select_one_classroom_many_subject.sql");
+        this.oneClassroomManyTeachersQuery = Database.readSQLFromResources("inspections/select_one_classroom_many_teachers.sql");
     }
 
     public List<List<RegularScheduleEntry>> runOneTeacherManyClassroomsInspection() throws SQLException {

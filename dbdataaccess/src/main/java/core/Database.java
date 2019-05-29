@@ -1,6 +1,6 @@
 package core;
 
-import authpojos.Account;
+import pojos.Account;
 import com.mysql.cj.jdbc.MysqlDataSource;
 import org.apache.commons.dbutils.*;
 import org.apache.commons.dbutils.handlers.BeanHandler;
@@ -51,9 +51,9 @@ public class Database {
         this.getFreeTime = readSQLFromResources(
                 "select_free_time_for_teacher_group_date.sql");
         this.getGroupedRegularSchedule = readSQLFromResources(
-                "select_grouped_regular_schedule.sql");
+                "select_schedule_grouped_regular.sql");
         this.getGroupedScheduleSQL = readSQLFromResources(
-                "select_grouped_schedule_for_date.sql");
+                "select_schedule_grouped_for_date.sql");
     }
 
     protected static String readSQLFromResources(String fileName) {

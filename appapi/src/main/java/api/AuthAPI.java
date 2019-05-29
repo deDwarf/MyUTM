@@ -1,7 +1,7 @@
 package api;
 
 import api.common.CommonResource;
-import authpojos.Account;
+import pojos.Account;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import core.AppContext;
