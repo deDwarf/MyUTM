@@ -103,6 +103,11 @@ public class Database {
         return runner.query("select * from fcimapp.Teachers", h);
     }
 
+    public List<TeacherWithAccountInfo> getTeachersWithAI() throws SQLException {
+        final ResultSetHandler<List<TeacherWithAccountInfo>> h = new BeanListHandler<>(TeacherWithAccountInfo.class, rowProcessor);
+        return runner.query("select * from fcimapp.Teachers", h);
+    }
+
     public Teacher getTeacher(Long teacherId) throws SQLException {
         final ResultSetHandler<Teacher> h = new BeanHandler<>(Teacher.class, rowProcessor);
         return runner.query("select * from fcimapp.Teachers where teacher_id = ?", h, teacherId);

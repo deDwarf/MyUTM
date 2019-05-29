@@ -3,6 +3,7 @@ package api;
 import api.common.SimpleCUDResource;
 import core.Roles;
 import pojos.Teacher;
+import pojos.TeacherWithAccountInfo;
 
 import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
@@ -21,9 +22,14 @@ public class TeachersResource extends SimpleCUDResource<Teacher> {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getListOfTeachers() throws SQLException {
-        List<Teacher> teachers = db.getTeachers();
-        return Response.ok(gson.toJson(teachers)).build();
+    public Response getListOfTeachers(@QueryParam("withAccountInfo") boolean withAI) throws SQLException {
+        if (withAI) {
+            List<TeacherWithAccountInfo> teachers = db.getTeachersWithAI();
+            return Response.ok(gson.toJson(teachers)).build();
+        } else {
+            List<Teacher> teachers = db.getTeachers();
+            return Response.ok(gson.toJson(teachers)).build();
+        }
     }
 
     @GET
